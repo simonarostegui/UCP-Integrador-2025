@@ -5,12 +5,12 @@ Trabajo integrador para el primer cuatrimestre del año 2025 de la Cuenca del Pl
 | Integrantes                   | Mail                                           |
 |---------------------------|------------------------------------------------|
 | Arostegui Simón                      | sarostegui.ctes@gmail.com    |
-| Mortola Santino                      |  TBD  |
+| Mortola Santino                      |  mortolasantino@gmail.com  |
 | Britez Tobias                  | tobiasbritez436@gmail.com       |
 | Codutti Laura       | agostinacod@gmail.com |
 | Benitez Juan          | bjuanpihotmailcom@gmail.com               |
 | Alcaraz Nicolas               |   nicolasagustinalcaraz@gmail.com |
-| Caceres Pared Marcelo Agustin | TBD |
+| Caceres Pared Marcelo Agustin | agustincaceresucp@gmail.com |
 
 # Consigna
 La empresa necesita empezar a mejorar su trabajo en logística, por los altos costos en pérdidas
