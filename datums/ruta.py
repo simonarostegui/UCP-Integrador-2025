@@ -34,27 +34,3 @@ class Ruta:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
         
         return R * c
-
-# Rutas predefinidas al Puerto de Rosario
-RUTAS = {
-    "ruta_9": Ruta(
-        puntos=[
-            PuntoRuta("Casa Central", -34.6037, -58.3816),
-            PuntoRuta("Puerto de Rosario", -32.9510139, -60.6260167)
-        ],
-        distancia_km=300,  # Aproximado
-        tiempo_estimado_horas=4,
-        costo_peajes=50.0,
-        paradas_combustible=[(150, "San Nicolás"), (250, "San Lorenzo")]
-    ),
-    "autopista_cordoba": Ruta(
-        puntos=[
-            PuntoRuta("Casa Central", -34.6037, -58.3816),
-            PuntoRuta("Puerto de Rosario", -32.9510139, -60.6260167)
-        ],
-        distancia_km=320,  # Aproximado
-        tiempo_estimado_horas=3.5,
-        costo_peajes=75.0,
-        paradas_combustible=[(160, "Pilar"), (280, "San Lorenzo")]
-    )
-}

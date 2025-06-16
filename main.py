@@ -5,7 +5,7 @@ from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 from datums.vehiculos import VEHICULOS_DISPONIBLES, Vehiculo
 from datums.conductor import CONDUCTOR_PREDETERMINADO
-from datums.ruta import RUTAS, PuntoRuta
+from datums.ruta import PuntoRuta, Ruta
 import math
 import requests
 
@@ -50,8 +50,6 @@ class CalculadoraLogistica:
         self.mapa.set_position(-32.9510139, -60.6260167)  # Puerto de Rosario
         self.mapa.set_zoom(8)
         
-        # marcadores
-        self.marcador_casa_central = self.mapa.set_marker(-34.6037, -58.3816, "Casa Central")
         self.marcador_puerto_rosario = self.mapa.set_marker(-32.9510139, -60.6260167, "Puerto de Rosario")
         
         # ruta
@@ -80,23 +78,27 @@ class CalculadoraLogistica:
         self.crear_panel_nuevo_vehiculo(pestaña_vehiculo)
         
     def crear_panel_calculo_ruta(self, parent):
+        # Frame para ruta
+        frame_ruta = ttk.LabelFrame(parent, text="Cálculo de Ruta")
+        frame_ruta.pack(fill="x", padx=5, pady=5)
+        
         # vehiculos
-        ttk.Label(parent, text="Vehículo:").pack(pady=5)
-        combo_vehiculo = ttk.Combobox(parent, textvariable=self.vehiculo_seleccionado)
+        ttk.Label(frame_ruta, text="Vehículo:").pack(pady=5)
+        combo_vehiculo = ttk.Combobox(frame_ruta, textvariable=self.vehiculo_seleccionado)
         combo_vehiculo['values'] = list(VEHICULOS_DISPONIBLES.keys())
         combo_vehiculo.pack(pady=5)
         
-        # rutas
-        ttk.Label(parent, text="Ruta:").pack(pady=5)
-        combo_ruta = ttk.Combobox(parent, textvariable=self.ruta_seleccionada)
-        combo_ruta['values'] = list(RUTAS.keys())
-        combo_ruta.pack(pady=5)
-        
         # peso de carga
-        ttk.Label(parent, text="Peso de Carga (kg):").pack(pady=5)
-        ttk.Entry(parent, textvariable=self.peso_carga).pack(pady=5)
+        ttk.Label(frame_ruta, text="Peso de Carga (kg):").pack(pady=5)
+        ttk.Entry(frame_ruta, textvariable=self.peso_carga).pack(pady=5)
         
-        ttk.Button(parent, text="Calcular", command=self.calcular).pack(pady=20)
+        # destino personalizado
+        ttk.Label(frame_ruta, text="Dirección de Destino:").pack(pady=5)
+        self.destino_direccion = tk.StringVar()
+        ttk.Entry(frame_ruta, textvariable=self.destino_direccion, width=40).pack(pady=5)
+        
+        ttk.Button(frame_ruta, text="Calcular Mejor Ruta", 
+                  command=self.calcular_mejor_ruta).pack(pady=20)
         
         # resultados
         self.marco_resultados = ttk.LabelFrame(parent, text="Resultados")
@@ -176,7 +178,7 @@ class CalculadoraLogistica:
             messagebox.showerror("Error", f"Error al agregar vehículo: {str(e)}")
     
     # API de OSRM para obtener la ruta real entre los puntos dados
-    # https://github.com/Project-OSRM/osrm-backend/blob/master/docs/api.md#get-route-v1driving
+    # https://github.com/Project-OSRM/osrm-backend/
     def obtener_ruta_osrm(self, puntos):
         #solicita a OSRM la ruta real entre los puntos dados
         if len(puntos) < 2:
@@ -216,49 +218,117 @@ class CalculadoraLogistica:
         self.mapa.set_position(centro_lat, centro_lon)
         self.mapa.set_zoom(8)
         
-    def calcular(self):
+    def calcular_mejor_ruta(self):
         try:
-            # obtener vehiculo y ruta seleccionados
+            # Punto de origen fijo (Puerto de Rosario)
+            punto_origen = PuntoRuta(
+                nombre="Puerto de Rosario",
+                latitud=-32.9510139,
+                longitud=-60.6260167
+            )
+            
+            # Obtener coordenadas de destino
+            destino = self.geocoder.geocode(self.destino_direccion.get())
+            if not destino:
+                messagebox.showerror("Error", "No se pudo encontrar la dirección de destino")
+                return
+            
+            # Crear punto de destino
+            punto_destino = PuntoRuta(
+                nombre=self.destino_direccion.get(),
+                latitud=destino.latitude,
+                longitud=destino.longitude
+            )
+            
+            # Obtener vehículo seleccionado
             vehiculo = VEHICULOS_DISPONIBLES[self.vehiculo_seleccionado.get()]
-            ruta = RUTAS[self.ruta_seleccionada.get()]
             peso = self.peso_carga.get()
             
-            # actualizar ruta en el mapa
-            self.actualizar_ruta_mapa(ruta)
+            # Definir las rutas posibles con sus puntos intermedios
+            rutas_posibles = {
+                "Ruta Nacional 9": [
+                    PuntoRuta("San Nicolás", -33.3358, -60.2102),
+                    PuntoRuta("San Pedro", -33.6791, -59.6664)
+                ],
+                "Autopista Córdoba (AU9)": [
+                    PuntoRuta("Pilar", -31.6789, -63.8790),
+                    PuntoRuta("Villa María", -32.4125, -63.2402)
+                ],
+                "Ruta Nacional 33": [
+                    PuntoRuta("Casilda", -33.0442, -61.1681),
+                    PuntoRuta("Venado Tuerto", -33.7467, -61.9689)
+                ],
+                "Autopista Brigadier López (AP01)": [
+                    PuntoRuta("Rafaela", -31.2503, -61.4867),
+                    PuntoRuta("Sunchales", -30.9440, -61.5614)
+                ]
+            }
             
-            # limpiar resultados anteriores
+            # Calcular la mejor ruta
+            mejor_ruta = None
+            mejor_costo_total = float('inf')
+            mejor_nombre_ruta = ""
+            
+            for nombre_ruta, puntos_intermedios in rutas_posibles.items():
+                # Crear puntos de ruta
+                puntos_ruta = [punto_origen] + puntos_intermedios + [punto_destino]
+                
+                # Calcular distancia total
+                distancia = sum(Ruta.calcular_distancia(puntos_ruta[i], puntos_ruta[i+1]) 
+                              for i in range(len(puntos_ruta)-1))
+                
+                # Calcular costos
+                costo_combustible = vehiculo.calcular_costo_combustible(distancia)
+                costo_mantenimiento = vehiculo.calcular_costo_mantenimiento(distancia)
+                tiempo_estimado = distancia / 80  # 80 km/h promedio
+                costo_conductor = CONDUCTOR_PREDETERMINADO.calcular_costo_viaje(tiempo_estimado / 24)
+                costo_peajes = 900.0 if "Autopista" in nombre_ruta else 0.0
+                costo_total = costo_combustible + costo_mantenimiento + costo_conductor + costo_peajes
+                
+                # Actualizar mejor ruta si es necesario
+                if costo_total < mejor_costo_total:
+                    mejor_costo_total = costo_total
+                    mejor_ruta = Ruta(
+                        puntos=puntos_ruta,
+                        distancia_km=distancia,
+                        tiempo_estimado_horas=tiempo_estimado,
+                        costo_peajes=costo_peajes,
+                        paradas_combustible=[(distancia/2, "Parada de Combustible")]
+                    )
+                    mejor_nombre_ruta = nombre_ruta
+            
+            # Actualizar mapa
+            self.actualizar_ruta_mapa(mejor_ruta)
+            
+            # Limpiar resultados anteriores
             for widget in self.marco_resultados.winfo_children():
                 widget.destroy()
             
-            # calcular costos y tiempos
-            costo_combustible = vehiculo.calcular_costo_combustible(ruta.distancia_km)
-            costo_mantenimiento = vehiculo.calcular_costo_mantenimiento(ruta.distancia_km)
-            costo_conductor = CONDUCTOR_PREDETERMINADO.calcular_costo_viaje(ruta.tiempo_estimado_horas / 24)
-            costo_total = costo_combustible + costo_mantenimiento + costo_conductor + ruta.costo_peajes
-            
-            # mostrar resultados
+            # Mostrar resultados
             resultados = [
-                f"Distancia: {ruta.distancia_km:.1f} km",
-                f"Tiempo estimado: {ruta.tiempo_estimado_horas:.1f} horas",
+                f"Origen: Puerto de Rosario",
+                f"Destino: {self.destino_direccion.get()}",
+                f"Ruta seleccionada: {mejor_nombre_ruta}",
+                f"Distancia: {mejor_ruta.distancia_km:.1f} km",
+                f"Tiempo estimado: {mejor_ruta.tiempo_estimado_horas:.1f} horas",
                 f"Costo combustible: ${costo_combustible:.2f}",
                 f"Costo mantenimiento: ${costo_mantenimiento:.2f}",
                 f"Costo conductor: ${costo_conductor:.2f}",
-                f"Costo peajes: ${ruta.costo_peajes:.2f}",
-                f"Costo total: ${costo_total:.2f}",
-                f"Paradas de combustible: {len(ruta.paradas_combustible)}"
+                f"Costo peajes: ${mejor_ruta.costo_peajes:.2f}",
+                f"Costo total: ${mejor_costo_total:.2f}"
             ]
             
             for resultado in resultados:
                 ttk.Label(self.marco_resultados, text=resultado).pack(pady=2)
             
-            # verificar si el vehiculo puede transportar el peso
+            # Verificar si el vehiculo puede transportar el peso
             if not vehiculo.puede_transportar_peso(peso):
                 messagebox.showwarning("Advertencia", 
                     f"El vehículo seleccionado no puede transportar {peso}kg. " +
                     f"Capacidad máxima: {vehiculo.capacidad_kg}kg")
-            
+                
         except Exception as e:
-            messagebox.showerror("Error", f"Error en el cálculo: {str(e)}")
+            messagebox.showerror("Error", f"Error al calcular la ruta: {str(e)}")
 
 if __name__ == "__main__":
     root = tk.Tk()
