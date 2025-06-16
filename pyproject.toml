@@ -1,11 +1,12 @@
 [project]
 name = "ucp-integrador-2025"
 version = "0.1.0"
-description = "UCP Integrador 2025 Project"
-requires-python = ">=3.8"
+description = "Calculadora de logística para optimización de rutas y costos"
 dependencies = [
-    "tkintermapview>=1.29",
-    "geopy>=2.4.1"
+    "tkinter",
+    "tkintermapview>=1.22",
+    "geopy>=2.3.0",
+    "requests>=2.0.0"
 ]
 
 [build-system]
