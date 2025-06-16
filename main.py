@@ -8,12 +8,14 @@ from datums.conductor import CONDUCTOR_PREDETERMINADO
 from datums.ruta import PuntoRuta, Ruta
 import math
 import requests
+import googlemaps
+import os
+from dotenv import load_dotenv
 
 class CalculadoraLogistica:
     def __init__(self, root):
         self.peso_carga = tk.DoubleVar(value=500) # 500 kg
         self.vehiculo_seleccionado = tk.StringVar(value="berlingo_furgon")
-        self.ruta_seleccionada = tk.StringVar(value="ruta_9")
         
         # Vehiculo Personalizado
         self.nombre_vehiculo = tk.StringVar()
@@ -26,6 +28,39 @@ class CalculadoraLogistica:
         
         # Geocoder
         self.geocoder = Nominatim(user_agent="calculadora_logistica")
+        
+        # Google Maps
+        load_dotenv()  # Cargar variables de entorno
+        api_key = os.getenv('GOOGLE_MAPS_API_KEY')
+        if not api_key:
+            messagebox.showerror("Error", 
+                "No se encontró la clave de API de Google Maps.\n" +
+                "Por favor, crea un archivo .env con tu clave de API:\n" +
+                "GOOGLE_MAPS_API_KEY=tu_clave_aqui")
+            root.destroy()
+            return
+            
+        try:
+            self.gmaps = googlemaps.Client(key=api_key)
+            # Usar geopy para obtener coordenadas precisas
+            origen = self.geocoder.geocode("Puerto de Rosario, Santa Fe, Argentina")
+            destino = self.geocoder.geocode("Rosario, Santa Fe, Argentina")
+            if not origen or not destino:
+                raise Exception("No se pudo geocodificar una de las direcciones.")
+            origen_coords = f"{origen.latitude},{origen.longitude}"
+            destino_coords = f"{destino.latitude},{destino.longitude}"
+            # Verificar que la API funciona usando coordenadas
+            self.gmaps.directions(
+                origen_coords,
+                destino_coords,
+                mode="driving"
+            )
+        except Exception as e:
+            messagebox.showerror("Error", 
+                f"Error al inicializar Google Maps API: {str(e)}\n" +
+                "Por favor, verifica tu clave de API, la API de Directions y las direcciones.")
+            root.destroy()
+            return
         
         # Ventana Principal
         self.root = root
@@ -218,6 +253,67 @@ class CalculadoraLogistica:
         self.mapa.set_position(centro_lat, centro_lon)
         self.mapa.set_zoom(8)
         
+    def obtener_info_peajes(self, origen, destino):
+        try:
+            # Obtener direcciones con información de peajes
+            directions_result = self.gmaps.directions(
+                origen,
+                destino,
+                mode="driving",
+                alternatives=True,
+                language="es",
+                region="ar"
+            )
+            
+            if not directions_result:
+                print("No se encontraron rutas disponibles")
+                return 0, 0
+            
+            # Buscar la ruta con menos peajes
+            mejor_ruta = None
+            menos_peajes = float('inf')
+            
+            for ruta in directions_result:
+                # Contar peajes en la ruta
+                num_peajes = 0
+                for paso in ruta['legs'][0]['steps']:
+                    # Verificar en las instrucciones y el nombre del paso
+                    instrucciones = paso.get('html_instructions', '').lower()
+                    nombre_paso = paso.get('name', '').lower()
+                    
+                    # Palabras clave que indican peaje
+                    palabras_clave = ['peaje', 'toll', 'cobro', 'pago']
+                    
+                    # Verificar si alguna palabra clave está presente
+                    if any(palabra in instrucciones or palabra in nombre_paso for palabra in palabras_clave):
+                        num_peajes += 1
+                
+                if num_peajes < menos_peajes:
+                    menos_peajes = num_peajes
+                    mejor_ruta = ruta
+            
+            if mejor_ruta:
+                # Calcular costo total de peajes basado en el tipo de vehículo
+                vehiculo = VEHICULOS_DISPONIBLES[self.vehiculo_seleccionado.get()]
+                costo_base_peaje = 900  # Costo base por peaje
+                
+                # Ajustar costo según el tipo de vehículo
+                if vehiculo.capacidad_kg > 1000:  # Vehículos pesados
+                    costo_base_peaje *= 1.5
+                elif vehiculo.capacidad_kg > 500:  # Vehículos medianos
+                    costo_base_peaje *= 1.2
+                
+                costo_peajes = menos_peajes * costo_base_peaje
+                print(f"Ruta encontrada con {menos_peajes} peajes")
+                return menos_peajes, costo_peajes
+            
+            print("No se encontró una ruta con información de peajes")
+            return 0, 0
+            
+        except Exception as e:
+            print(f"Error obteniendo información de peajes: {e}")
+            return 0, 0
+
     def calcular_mejor_ruta(self):
         try:
             # Punto de origen fijo (Puerto de Rosario)
@@ -268,6 +364,7 @@ class CalculadoraLogistica:
             mejor_ruta = None
             mejor_costo_total = float('inf')
             mejor_nombre_ruta = ""
+            mejor_num_peajes = 0
             
             for nombre_ruta, puntos_intermedios in rutas_posibles.items():
                 # Crear puntos de ruta
@@ -277,12 +374,17 @@ class CalculadoraLogistica:
                 distancia = sum(Ruta.calcular_distancia(puntos_ruta[i], puntos_ruta[i+1]) 
                               for i in range(len(puntos_ruta)-1))
                 
+                # Obtener información de peajes
+                num_peajes, costo_peajes = self.obtener_info_peajes(
+                    f"{punto_origen.latitud},{punto_origen.longitud}",
+                    f"{punto_destino.latitud},{punto_destino.longitud}"
+                )
+                
                 # Calcular costos
                 costo_combustible = vehiculo.calcular_costo_combustible(distancia)
                 costo_mantenimiento = vehiculo.calcular_costo_mantenimiento(distancia)
                 tiempo_estimado = distancia / 80  # 80 km/h promedio
                 costo_conductor = CONDUCTOR_PREDETERMINADO.calcular_costo_viaje(tiempo_estimado / 24)
-                costo_peajes = 900.0 if "Autopista" in nombre_ruta else 0.0
                 costo_total = costo_combustible + costo_mantenimiento + costo_conductor + costo_peajes
                 
                 # Actualizar mejor ruta si es necesario
@@ -296,6 +398,7 @@ class CalculadoraLogistica:
                         paradas_combustible=[(distancia/2, "Parada de Combustible")]
                     )
                     mejor_nombre_ruta = nombre_ruta
+                    mejor_num_peajes = num_peajes
             
             # Actualizar mapa
             self.actualizar_ruta_mapa(mejor_ruta)
@@ -311,6 +414,7 @@ class CalculadoraLogistica:
                 f"Ruta seleccionada: {mejor_nombre_ruta}",
                 f"Distancia: {mejor_ruta.distancia_km:.1f} km",
                 f"Tiempo estimado: {mejor_ruta.tiempo_estimado_horas:.1f} horas",
+                f"Número de peajes: {mejor_num_peajes}",
                 f"Costo combustible: ${costo_combustible:.2f}",
                 f"Costo mantenimiento: ${costo_mantenimiento:.2f}",
                 f"Costo conductor: ${costo_conductor:.2f}",
