@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from logistica import CalculadoraLogistica
+from usuario import InterfazUsuario
 from tkintermapview import TkinterMapView
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
@@ -56,7 +57,13 @@ class LoginInterface:
         self.root.geometry(f'{width}x{height}+{x}+{y}')
     
     def acceso_usuario(self):
-        messagebox.showinfo("Acceso Usuario", "Funcionalidad en desarrollo")
+        # Cerrar la ventana actual
+        self.root.destroy()
+        
+        # Crear nueva ventana para la interfaz de usuario
+        root = tk.Tk()
+        app = InterfazUsuario(root)
+        root.mainloop()
     
     def acceso_conductor(self):
         # Cerrar la ventana actual

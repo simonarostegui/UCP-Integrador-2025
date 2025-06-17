@@ -1,0 +1,72 @@
+[
+  {
+    "nombre": "Jabón líquido",
+    "categoria": "higiene",
+    "precio": 1200,
+    "peso": 0.5,
+    "stock": 100
+  },
+  {
+    "nombre": "Shampoo",
+    "categoria": "higiene",
+    "precio": 1500,
+    "peso": 0.5,
+    "stock": 94
+  },
+  {
+    "nombre": "Papel higiénico",
+    "categoria": "higiene",
+    "precio": 800,
+    "peso": 1.0,
+    "stock": 200
+  },
+  {
+    "nombre": "Detergente",
+    "categoria": "higiene",
+    "precio": 2000,
+    "peso": 2.0,
+    "stock": 50
+  },
+  {
+    "nombre": "Limpia pisos",
+    "categoria": "higiene",
+    "precio": 1800,
+    "peso": 1.5,
+    "stock": 50
+  },
+  {
+    "nombre": "Arroz",
+    "categoria": "alimentos",
+    "precio": 1500,
+    "peso": 1.0,
+    "stock": 100
+  },
+  {
+    "nombre": "Fideos",
+    "categoria": "alimentos",
+    "precio": 800,
+    "peso": 0.5,
+    "stock": 150
+  },
+  {
+    "nombre": "Aceite",
+    "categoria": "alimentos",
+    "precio": 2500,
+    "peso": 1.0,
+    "stock": 80
+  },
+  {
+    "nombre": "Azúcar",
+    "categoria": "alimentos",
+    "precio": 1200,
+    "peso": 1.0,
+    "stock": 40
+  },
+  {
+    "nombre": "Harina",
+    "categoria": "alimentos",
+    "precio": 1000,
+    "peso": 1.0,
+    "stock": 120
+  }
+]
