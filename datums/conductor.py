@@ -20,7 +20,7 @@ class Conductor:
         return timedelta(days=dias_necesarios)
 
 # Configuración predeterminada del conductor
-CONDUCTOR_PREDETERMINADO = Conductor(
+CONDUCTOR_PREDETERMINADO = Conductor( # Luis De Los Reyes
     salario_base=1500,  # USD por mes
     viaticos_diarios=50,  # USD por día
     horas_conduccion_maximas=8,

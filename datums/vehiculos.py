@@ -26,7 +26,7 @@ class Vehiculo:
 # Vehículos predefinidos
 VEHICULOS_DISPONIBLES = {
     # https://www.citroen.com.ar/content/dam/citroen/argentina/ficha-tecnica/ENE_FT_BERLINGO_FURGON.pdf
-    "berlingo_furgon": Vehiculo(
+    "Citroën Berlingo Furgón": Vehiculo(
         nombre="Citroën Berlingo Furgón",
         capacidad_kg=800,  
         consumo_combustible=10,  # 10L/100km
