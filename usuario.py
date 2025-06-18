@@ -53,21 +53,33 @@ class InterfazUsuario:
         
         # Cargar pedidos existentes
         if os.path.exists(self.pedidos_file):
-            with open(self.pedidos_file, 'r', encoding='utf-8') as f:
-                pedidos_data = json.load(f)
-                PEDIDOS.clear()  # Limpiar lista actual
-                for pedido_dict in pedidos_data:
-                    pedido = Pedido(
-                        id=pedido_dict["id"],
-                        usuario=pedido_dict["usuario"],
-                        items=pedido_dict["items"],
-                        direccion_destino=pedido_dict["direccion_destino"]
-                    )
-                    pedido.estado = pedido_dict["estado"]
-                    pedido.conductor = pedido_dict["conductor"]
-                    if pedido_dict["fecha_creacion"]:
-                        pedido.fecha_creacion = datetime.fromisoformat(pedido_dict["fecha_creacion"])
-                    PEDIDOS.append(pedido)
+            try:
+                with open(self.pedidos_file, 'r', encoding='utf-8') as f:
+                    contenido = f.read().strip()
+                    if contenido:  # Verificar que el archivo no esté vacío
+                        pedidos_data = json.loads(contenido)
+                        PEDIDOS.clear()  # Limpiar lista actual
+                        for pedido_dict in pedidos_data:
+                            pedido = Pedido(
+                                id=pedido_dict["id"],
+                                usuario=pedido_dict["usuario"],
+                                items=pedido_dict["items"],
+                                direccion_destino=pedido_dict["direccion_destino"]
+                            )
+                            pedido.estado = pedido_dict["estado"]
+                            pedido.conductor = pedido_dict["conductor"]
+                            if pedido_dict["fecha_creacion"]:
+                                pedido.fecha_creacion = datetime.fromisoformat(pedido_dict["fecha_creacion"])
+                            PEDIDOS.append(pedido)
+                    else:
+                        # Archivo vacío, inicializar lista vacía
+                        PEDIDOS.clear()
+            except (json.JSONDecodeError, FileNotFoundError):
+                # Si hay error al leer JSON, inicializar lista vacía
+                PEDIDOS.clear()
+        else:
+            # Archivo no existe, inicializar lista vacía
+            PEDIDOS.clear()
     
     def guardar_datos_local(self):
         # Guardar productos
