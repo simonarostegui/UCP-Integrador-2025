@@ -6,11 +6,14 @@ from geopy.distance import geodesic
 from datums.vehiculos import VEHICULOS_DISPONIBLES, Vehiculo
 from datums.conductor import CONDUCTOR_PREDETERMINADO
 from datums.ruta import PuntoRuta, Ruta
+from datums.pedido import PEDIDOS, Pedido
 import math
 import requests
 import googlemaps
 import os
 from dotenv import load_dotenv
+import json
+from datetime import datetime
 
 class CalculadoraLogistica:
     def __init__(self, root):
@@ -70,11 +73,18 @@ class CalculadoraLogistica:
         self.marco_principal = ttk.Frame(root)
         self.marco_principal.pack(fill="both", expand=True, padx=10, pady=10)
         
+        # Inicializar variables de archivo antes de cargar pedidos
+        self.data_dir = "data"
+        self.pedidos_file = os.path.join(self.data_dir, "pedidos.json")
+        
         # mapa
         self.crear_panel_mapa()
         
         # calculos
         self.crear_panel_calculos()
+        
+        # Cargar pedidos después de que todo esté inicializado
+        self.cargar_pedidos()
         
     def crear_panel_mapa(self):
         marco_mapa = ttk.LabelFrame(self.marco_principal, text="Mapa de Ruta")
@@ -94,24 +104,117 @@ class CalculadoraLogistica:
         marco_calculos = ttk.LabelFrame(self.marco_principal, text="Cálculos")
         marco_calculos.pack(side="right", fill="both", expand=True, padx=5, pady=5)
         
-        # pestañas
+        # Crear pestañas
         notebook = ttk.Notebook(marco_calculos)
         notebook.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # calculo
+        # Pestaña de pedidos
+        pestaña_pedidos = ttk.Frame(notebook)
+        notebook.add(pestaña_pedidos, text="Pedidos")
+        
+        # Pestaña de cálculo
         pestaña_calculo = ttk.Frame(notebook)
         notebook.add(pestaña_calculo, text="Cálculo de Ruta")
         
-        # nuevo vehiculo
+        # Pestaña de nuevo vehículo
         pestaña_vehiculo = ttk.Frame(notebook)
         notebook.add(pestaña_vehiculo, text="Nuevo Vehículo")
         
-        # calculo
+        # Crear paneles
+        self.crear_panel_pedidos(pestaña_pedidos)
         self.crear_panel_calculo_ruta(pestaña_calculo)
-        
-        # nuevo vehiculo
         self.crear_panel_nuevo_vehiculo(pestaña_vehiculo)
         
+    def crear_panel_pedidos(self, parent):
+        # Frame para lista de pedidos
+        frame_pedidos = ttk.LabelFrame(parent, text="Pedidos Pendientes")
+        frame_pedidos.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Treeview para pedidos
+        self.tree_pedidos = ttk.Treeview(frame_pedidos, columns=("ID", "Usuario", "Dirección", "Items", "Estado"), show="headings")
+        self.tree_pedidos.heading("ID", text="ID")
+        self.tree_pedidos.heading("Usuario", text="Usuario")
+        self.tree_pedidos.heading("Dirección", text="Dirección")
+        self.tree_pedidos.heading("Items", text="Items")
+        self.tree_pedidos.heading("Estado", text="Estado")
+        self.tree_pedidos.pack(fill="both", expand=True, pady=5)
+        
+        # Botón para tomar pedido
+        ttk.Button(frame_pedidos, text="Tomar Pedido Seleccionado", 
+                  command=self.tomar_pedido).pack(pady=5)
+        
+        # Botón para actualizar lista
+        ttk.Button(frame_pedidos, text="Actualizar Lista", 
+                  command=self.actualizar_lista_pedidos).pack(pady=5)
+        
+        # Inicializar lista
+        self.actualizar_lista_pedidos()
+    
+    def actualizar_lista_pedidos(self):
+        self.cargar_pedidos()  # Asegura que siempre se lean los pedidos más recientes del archivo
+        # Limpiar lista actual
+        for item in self.tree_pedidos.get_children():
+            self.tree_pedidos.delete(item)
+        # Agregar pedidos pendientes
+        for pedido in PEDIDOS:
+            if pedido.estado == "pendiente":
+                # Formatear items para mostrar
+                items_texto = []
+                for item in pedido.items:
+                    items_texto.append(f"{item['cantidad']}x {item['nombre']}")
+                items_str = ", ".join(items_texto)
+                
+                self.tree_pedidos.insert("", "end", values=(
+                    pedido.id,
+                    pedido.usuario,
+                    pedido.direccion_destino,
+                    items_str,
+                    pedido.estado
+                ))
+    
+    def tomar_pedido(self):
+        # Obtener pedido seleccionado
+        seleccion = self.tree_pedidos.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
+            return
+        
+        # Obtener ID del pedido
+        pedido_id = int(self.tree_pedidos.item(seleccion[0])["values"][0])
+        
+        # Encontrar pedido
+        pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
+        if not pedido:
+            messagebox.showerror("Error", "Pedido no encontrado")
+            return
+        
+        # Tomar pedido
+        if pedido.tomar_pedido(CONDUCTOR_PREDETERMINADO.nombre):
+            self.guardar_pedidos()
+            messagebox.showinfo("Éxito", f"Pedido #{pedido_id} tomado exitosamente")
+            self.actualizar_lista_pedidos()
+            
+            # Establecer dirección de destino en el mapa
+            self.destino_direccion.set(pedido.direccion_destino)
+        else:
+            messagebox.showerror("Error", "No se pudo tomar el pedido")
+    
+    def guardar_pedidos(self):
+        pedidos_data = []
+        for pedido in PEDIDOS:
+            pedido_dict = {
+                "id": pedido.id,
+                "usuario": pedido.usuario,
+                "items": pedido.items,
+                "direccion_destino": pedido.direccion_destino,
+                "estado": pedido.estado,
+                "conductor": pedido.conductor,
+                "fecha_creacion": pedido.fecha_creacion.isoformat() if pedido.fecha_creacion else None
+            }
+            pedidos_data.append(pedido_dict)
+        with open(self.pedidos_file, 'w', encoding='utf-8') as f:
+            json.dump(pedidos_data, f, ensure_ascii=False, indent=4)
+    
     def crear_panel_calculo_ruta(self, parent):
         # Frame para ruta
         frame_ruta = ttk.LabelFrame(parent, text="Cálculo de Ruta")
@@ -439,6 +542,24 @@ class CalculadoraLogistica:
                 
         except Exception as e:
             messagebox.showerror("Error", f"Error al calcular la ruta: {str(e)}")
+
+    def cargar_pedidos(self):
+        if os.path.exists(self.pedidos_file):
+            with open(self.pedidos_file, 'r', encoding='utf-8') as f:
+                pedidos_data = json.load(f)
+                PEDIDOS.clear()
+                for pedido_dict in pedidos_data:
+                    pedido = Pedido(
+                        id=pedido_dict["id"],
+                        usuario=pedido_dict["usuario"],
+                        items=pedido_dict["items"],
+                        direccion_destino=pedido_dict["direccion_destino"]
+                    )
+                    pedido.estado = pedido_dict["estado"]
+                    pedido.conductor = pedido_dict["conductor"]
+                    if pedido_dict["fecha_creacion"]:
+                        pedido.fecha_creacion = datetime.fromisoformat(pedido_dict["fecha_creacion"])
+                    PEDIDOS.append(pedido)
 
 if __name__ == "__main__":
     root = tk.Tk()

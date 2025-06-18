@@ -3,6 +3,7 @@ from datetime import timedelta
 
 @dataclass
 class Conductor:
+    nombre: str
     salario_base: float  # Salario mensual base
     viaticos_diarios: float  # Viáticos diarios para comida y alojamiento
     horas_conduccion_maximas: int = 8  # Horas máximas de conducción por día
@@ -20,9 +21,8 @@ class Conductor:
         return timedelta(days=dias_necesarios)
 
 # Configuración predeterminada del conductor
-CONDUCTOR_PREDETERMINADO = Conductor( # Luis De Los Reyes
-    salario_base=1500,  # USD por mes
-    viaticos_diarios=50,  # USD por día
-    horas_conduccion_maximas=8,
-    horas_descanso=11
+CONDUCTOR_PREDETERMINADO = Conductor(
+    nombre="Juan Pérez",
+    salario_base=150000,  # $150,000 por mes
+    viaticos_diarios=5000  # $5,000 por día
 )
