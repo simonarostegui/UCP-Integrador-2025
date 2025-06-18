@@ -10,14 +10,162 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import sys
+from dotenv import load_dotenv
+import hashlib
+
+# Cargar variables de entorno
+load_dotenv()
 
 class InterfazAdmin:
     def __init__(self, root, parent=None):
         self.root = root
         self.parent = parent
+        
+        # Configurar ventana inicial para login
+        self.root.title("Panel de Administración - Login")
+        self.root.geometry("400x300")
+        self.root.resizable(False, False)
+        self.root.protocol("WM_DELETE_WINDOW", self.cerrar_admin)
+        
+        # Centrar ventana
+        self.centrar_ventana()
+        
+        # Crear interfaz de login
+        self.crear_interfaz_login()
+        
+    def centrar_ventana(self):
+        """Centra la ventana en la pantalla"""
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
+    
+    def crear_interfaz_login(self):
+        """Crea la interfaz de login"""
+        # Frame principal
+        frame_principal = ttk.Frame(self.root)
+        frame_principal.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Título
+        ttk.Label(frame_principal, text="PANEL DE ADMINISTRACIÓN", 
+                 font=("Arial", 16, "bold")).pack(pady=20)
+        
+        ttk.Label(frame_principal, text="Login de Administrador", 
+                 font=("Arial", 12)).pack(pady=10)
+        
+        # Frame para formulario
+        frame_formulario = ttk.LabelFrame(frame_principal, text="Credenciales")
+        frame_formulario.pack(fill="x", pady=20)
+        
+        # Variables para login
+        self.usuario_admin = tk.StringVar()
+        self.password_admin = tk.StringVar()
+        
+        # Campos del formulario
+        ttk.Label(frame_formulario, text="Usuario:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        entry_usuario = ttk.Entry(frame_formulario, textvariable=self.usuario_admin, width=25)
+        entry_usuario.grid(row=0, column=1, padx=10, pady=10)
+        
+        ttk.Label(frame_formulario, text="Contraseña:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        entry_password = ttk.Entry(frame_formulario, textvariable=self.password_admin, show="*", width=25)
+        entry_password.grid(row=1, column=1, padx=10, pady=10)
+        
+        # Configurar Enter para hacer login
+        entry_usuario.bind('<Return>', lambda e: self.login_admin())
+        entry_password.bind('<Return>', lambda e: self.login_admin())
+        
+        # Botones
+        frame_botones = ttk.Frame(frame_principal)
+        frame_botones.pack(pady=20)
+        
+        # Botón principal de login
+        btn_login = ttk.Button(
+            frame_botones,
+            text="INICIAR SESIÓN",
+            command=self.login_admin
+        )
+        btn_login.pack(pady=10, ipadx=20, ipady=10)
+        
+        # Botón cancelar
+        ttk.Button(
+            frame_botones,
+            text="Cancelar",
+            command=self.cancelar_login,
+            width=15
+        ).pack(pady=5)
+        
+        # Información de credenciales
+        frame_info = ttk.LabelFrame(frame_principal, text="Credenciales por Defecto")
+        frame_info.pack(fill="x", pady=10)
+        
+        info_text = "Usuario: admin\n"
+        info_text += "Contraseña: admin123"
+        
+        ttk.Label(frame_info, text=info_text, font=("Arial", 8), 
+                 justify="left").pack(padx=10, pady=5)
+        
+        # Instrucciones
+        ttk.Label(frame_principal, text="Presiona Enter en cualquier campo para iniciar sesión", 
+                 font=("Arial", 9), foreground="gray").pack(pady=5)
+        
+        # Enfocar en el campo de usuario
+        entry_usuario.focus()
+    
+    def login_admin(self):
+        """Función de login del administrador"""
+        usuario = self.usuario_admin.get().strip()
+        password = self.password_admin.get().strip()
+        
+        if not usuario or not password:
+            messagebox.showerror("Error", "Por favor complete usuario y contraseña")
+            return
+        
+        # Obtener credenciales desde variables de entorno
+        admin_user = os.getenv('ADMIN_USER', 'admin')
+        admin_password_hash = os.getenv('ADMIN_PASSWORD_HASH', '')
+        
+        # Si no hay hash configurado, usar credenciales por defecto
+        if not admin_password_hash:
+            admin_password_hash = hashlib.sha256('admin123'.encode()).hexdigest()
+        
+        # Verificar credenciales
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        
+        if usuario == admin_user and password_hash == admin_password_hash:
+            # Login exitoso
+            messagebox.showinfo("Bienvenido", "Acceso concedido al Panel de Administración")
+            
+            # Inicializar la interfaz completa de administración
+            self.inicializar_interfaz_admin()
+        else:
+            messagebox.showerror("Error", "Usuario o contraseña incorrectos")
+            self.password_admin.set("")  # Limpiar contraseña
+            # Enfocar en el campo de contraseña
+            for widget in self.root.winfo_children():
+                if isinstance(widget, ttk.Frame):
+                    for child in widget.winfo_children():
+                        if isinstance(child, ttk.LabelFrame):
+                            for grandchild in child.winfo_children():
+                                if isinstance(grandchild, ttk.Entry) and grandchild.cget('show') == '*':
+                                    grandchild.focus()
+                                    break
+    
+    def cancelar_login(self):
+        """Cancela el login y cierra la ventana"""
+        self.cerrar_admin()
+    
+    def inicializar_interfaz_admin(self):
+        """Inicializa la interfaz completa de administración después del login"""
+        # Limpiar ventana
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Configurar ventana para administración
         self.root.title("Panel de Administración")
         self.root.geometry("1400x900")
-        self.root.protocol("WM_DELETE_WINDOW", self.cerrar_admin)
+        self.root.resizable(True, True)
         
         # Variables de datos
         self.data_dir = "data"
@@ -144,9 +292,17 @@ class InterfazAdmin:
         self.crear_pestaña_multas()
         self.crear_pestaña_reportes()
         
+        # Frame para botones
+        frame_botones = ttk.Frame(self.frame_principal)
+        frame_botones.pack(pady=10)
+        
+        # Botón de logout
+        ttk.Button(frame_botones, text="Cerrar Sesión", 
+                  command=self.logout_admin).pack(side="left", padx=5)
+        
         # Botón para cerrar
-        ttk.Button(self.frame_principal, text="Cerrar", 
-                  command=self.cerrar_admin).pack(pady=10)
+        ttk.Button(frame_botones, text="Cerrar", 
+                  command=self.cerrar_admin).pack(side="left", padx=5)
     
     def crear_pestaña_productos(self):
         # Pestaña de productos
@@ -995,6 +1151,23 @@ class InterfazAdmin:
         self.root.destroy()
         if self.parent:
             self.parent.deiconify()
+
+    def logout_admin(self):
+        """Cierra sesión y vuelve a la pantalla de login"""
+        # Limpiar ventana
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Volver a la configuración de login
+        self.root.title("Panel de Administración - Login")
+        self.root.geometry("400x300")
+        self.root.resizable(False, False)
+        
+        # Centrar ventana
+        self.centrar_ventana()
+        
+        # Crear interfaz de login
+        self.crear_interfaz_login()
 
     def actualizar_combobox_responsables(self):
         if hasattr(self, 'combo_responsable_multa'):
