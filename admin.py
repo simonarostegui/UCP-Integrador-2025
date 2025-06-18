@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 from datums.pedido import PEDIDOS, Pedido
 from datums.vehiculos import VEHICULOS_DISPONIBLES, Vehiculo
-from datums.conductor import CONDUCTOR_PREDETERMINADO, cargar_conductores
+from datums.conductor import CONDUCTOR_PREDETERMINADO, cargar_conductores, guardar_conductores
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
@@ -128,6 +128,10 @@ class InterfazAdmin:
         self.frame_principal = ttk.Frame(self.root)
         self.frame_principal.pack(fill="both", expand=True, padx=10, pady=10)
         
+        # Título
+        ttk.Label(self.frame_principal, text="PANEL DE ADMINISTRACIÓN", 
+                 font=("Arial", 16, "bold")).pack(pady=10)
+        
         # Notebook para pestañas
         self.notebook = ttk.Notebook(self.frame_principal)
         self.notebook.pack(fill="both", expand=True)
@@ -135,13 +139,10 @@ class InterfazAdmin:
         # Crear pestañas
         self.crear_pestaña_productos()
         self.crear_pestaña_estadisticas()
-        self.crear_pestaña_pedidos()
+        self.crear_pestaña_conductores()
         self.crear_pestaña_vehiculos()
         self.crear_pestaña_multas()
         self.crear_pestaña_reportes()
-        
-        # Configurar evento para actualizar combobox de responsables cuando se seleccione la pestaña de multas
-        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
         
         # Botón para cerrar
         ttk.Button(self.frame_principal, text="Cerrar", 
@@ -254,63 +255,141 @@ class InterfazAdmin:
         self.texto_estadisticas = tk.Text(frame_detalle, height=12)
         self.texto_estadisticas.pack(fill="x", padx=5, pady=5)
     
-    def crear_pestaña_pedidos(self):
-        # Pestaña de pedidos
-        self.pestaña_pedidos = ttk.Frame(self.notebook)
-        self.notebook.add(self.pestaña_pedidos, text="Gestión de Pedidos")
+    def crear_pestaña_conductores(self):
+        # Pestaña de conductores
+        self.pestaña_conductores = ttk.Frame(self.notebook)
+        self.notebook.add(self.pestaña_conductores, text="Gestión de Conductores y Pedidos")
         
-        # Frame para pedidos en espera
-        frame_espera = ttk.LabelFrame(self.pestaña_pedidos, text="Pedidos en Espera")
-        frame_espera.pack(fill="x", padx=5, pady=5)
+        # Frame para agregar conductor
+        frame_agregar = ttk.LabelFrame(self.pestaña_conductores, text="Agregar/Editar Conductor")
+        frame_agregar.pack(fill="x", padx=5, pady=5)
         
-        # Treeview para pedidos en espera
-        self.tree_pedidos_espera = ttk.Treeview(frame_espera, 
-                                               columns=("id", "usuario", "items", "direccion", "fecha"), 
-                                               show="headings", height=6)
-        self.tree_pedidos_espera.heading("id", text="ID")
-        self.tree_pedidos_espera.heading("usuario", text="Usuario")
-        self.tree_pedidos_espera.heading("items", text="Items")
-        self.tree_pedidos_espera.heading("direccion", text="Dirección")
-        self.tree_pedidos_espera.heading("fecha", text="Fecha")
-        self.tree_pedidos_espera.pack(fill="x", padx=5, pady=5)
+        # Variables para formulario
+        self.nombre_conductor = tk.StringVar()
+        self.dni_conductor = tk.StringVar()
+        self.telefono_conductor = tk.StringVar()
+        self.usuario_conductor = tk.StringVar()
+        self.password_conductor = tk.StringVar()
+        self.licencia_conductor = tk.StringVar(value="B1")
+        self.conductor_editando = None  # Para rastrear qué conductor se está editando
         
-        # Frame para pedidos en curso
-        frame_curso = ttk.LabelFrame(self.pestaña_pedidos, text="Pedidos en Curso")
-        frame_curso.pack(fill="x", padx=5, pady=5)
+        # Campos del formulario
+        ttk.Label(frame_agregar, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_agregar, textvariable=self.nombre_conductor, width=25).grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_agregar, text="DNI:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_agregar, textvariable=self.dni_conductor, width=15).grid(row=0, column=3, padx=5, pady=5)
+        
+        ttk.Label(frame_agregar, text="Teléfono:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_agregar, textvariable=self.telefono_conductor, width=15).grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        
+        ttk.Label(frame_agregar, text="Licencia:").grid(row=1, column=2, padx=5, pady=5, sticky="w")
+        ttk.Combobox(frame_agregar, textvariable=self.licencia_conductor, 
+                    values=["B1", "B2", "B3", "C1", "C2"], width=12).grid(row=1, column=3, padx=5, pady=5)
+        
+        ttk.Label(frame_agregar, text="Usuario:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_agregar, textvariable=self.usuario_conductor, width=25).grid(row=2, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_agregar, text="Contraseña:").grid(row=2, column=2, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_agregar, textvariable=self.password_conductor, show="*", width=15).grid(row=2, column=3, padx=5, pady=5)
+        
+        # Botones
+        ttk.Button(frame_agregar, text="Agregar Conductor", 
+                  command=self.agregar_conductor).grid(row=3, column=0, columnspan=4, padx=5, pady=5)
+        ttk.Button(frame_agregar, text="Editar Conductor Seleccionado", 
+                  command=self.editar_conductor).grid(row=4, column=0, columnspan=4, padx=5, pady=5)
+        ttk.Button(frame_agregar, text="Actualizar Conductor", 
+                  command=self.actualizar_conductor).grid(row=5, column=0, columnspan=4, padx=5, pady=5)
+        ttk.Button(frame_agregar, text="Cancelar Edición", 
+                  command=self.cancelar_edicion_conductor).grid(row=6, column=0, columnspan=4, padx=5, pady=5)
+        
+        # Frame para estado de conductores
+        frame_conductores = ttk.LabelFrame(self.pestaña_conductores, text="Estado de Conductores")
+        frame_conductores.pack(fill="x", padx=5, pady=5)
+        
+        # Treeview para conductores
+        self.tree_conductores = ttk.Treeview(frame_conductores, 
+                                            columns=("nombre", "licencia", "estado", "pedido_actual"), 
+                                            show="headings", height=4)
+        self.tree_conductores.heading("nombre", text="Nombre")
+        self.tree_conductores.heading("licencia", text="Licencia")
+        self.tree_conductores.heading("estado", text="Estado")
+        self.tree_conductores.heading("pedido_actual", text="Pedido Actual")
+        self.tree_conductores.pack(fill="x", pady=5)
+        
+        # Frame para gestión de pedidos
+        frame_gestion_pedidos = ttk.LabelFrame(self.pestaña_conductores, text="Gestión de Pedidos")
+        frame_gestion_pedidos.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Notebook para diferentes estados de pedidos
+        notebook_pedidos = ttk.Notebook(frame_gestion_pedidos)
+        notebook_pedidos.pack(fill="both", expand=True, pady=5)
+        
+        # Pestaña de pedidos disponibles
+        pestaña_disponibles = ttk.Frame(notebook_pedidos)
+        notebook_pedidos.add(pestaña_disponibles, text="Pedidos Disponibles")
+        
+        # Treeview para pedidos disponibles
+        self.tree_pedidos_disponibles = ttk.Treeview(pestaña_disponibles, 
+                                                    columns=("id", "usuario", "direccion", "items", "fecha"), 
+                                                    show="headings", height=4)
+        self.tree_pedidos_disponibles.heading("id", text="ID")
+        self.tree_pedidos_disponibles.heading("usuario", text="Cliente")
+        self.tree_pedidos_disponibles.heading("direccion", text="Dirección")
+        self.tree_pedidos_disponibles.heading("items", text="Items")
+        self.tree_pedidos_disponibles.heading("fecha", text="Fecha")
+        self.tree_pedidos_disponibles.pack(fill="both", expand=True, pady=5)
+        
+        # Pestaña de pedidos en curso
+        pestaña_curso = ttk.Frame(notebook_pedidos)
+        notebook_pedidos.add(pestaña_curso, text="Pedidos en Curso")
         
         # Treeview para pedidos en curso
-        self.tree_pedidos_curso = ttk.Treeview(frame_curso, 
-                                              columns=("id", "usuario", "items", "direccion", "conductor", "fecha"), 
-                                              show="headings", height=6)
+        self.tree_pedidos_curso = ttk.Treeview(pestaña_curso, 
+                                              columns=("id", "usuario", "direccion", "conductor", "fecha"), 
+                                              show="headings", height=4)
         self.tree_pedidos_curso.heading("id", text="ID")
-        self.tree_pedidos_curso.heading("usuario", text="Usuario")
-        self.tree_pedidos_curso.heading("items", text="Items")
+        self.tree_pedidos_curso.heading("usuario", text="Cliente")
         self.tree_pedidos_curso.heading("direccion", text="Dirección")
         self.tree_pedidos_curso.heading("conductor", text="Conductor")
         self.tree_pedidos_curso.heading("fecha", text="Fecha")
-        self.tree_pedidos_curso.pack(fill="x", padx=5, pady=5)
+        self.tree_pedidos_curso.pack(fill="both", expand=True, pady=5)
         
-        # Frame para pedidos completados
-        frame_completado = ttk.LabelFrame(self.pestaña_pedidos, text="Pedidos Completados")
-        frame_completado.pack(fill="x", padx=5, pady=5)
+        # Pestaña de pedidos completados
+        pestaña_completados = ttk.Frame(notebook_pedidos)
+        notebook_pedidos.add(pestaña_completados, text="Pedidos Completados")
         
         # Treeview para pedidos completados
-        self.tree_pedidos_completado = ttk.Treeview(frame_completado, 
-                                                   columns=("id", "usuario", "items", "direccion", "conductor", "fecha"), 
-                                                   show="headings", height=6)
-        self.tree_pedidos_completado.heading("id", text="ID")
-        self.tree_pedidos_completado.heading("usuario", text="Usuario")
-        self.tree_pedidos_completado.heading("items", text="Items")
-        self.tree_pedidos_completado.heading("direccion", text="Dirección")
-        self.tree_pedidos_completado.heading("conductor", text="Conductor")
-        self.tree_pedidos_completado.heading("fecha", text="Fecha")
-        self.tree_pedidos_completado.pack(fill="x", padx=5, pady=5)
+        self.tree_pedidos_completados = ttk.Treeview(pestaña_completados, 
+                                                    columns=("id", "usuario", "direccion", "conductor", "fecha"), 
+                                                    show="headings", height=4)
+        self.tree_pedidos_completados.heading("id", text="ID")
+        self.tree_pedidos_completados.heading("usuario", text="Cliente")
+        self.tree_pedidos_completados.heading("direccion", text="Dirección")
+        self.tree_pedidos_completados.heading("conductor", text="Conductor")
+        self.tree_pedidos_completados.heading("fecha", text="Fecha")
+        self.tree_pedidos_completados.pack(fill="both", expand=True, pady=5)
         
-        # Botón para actualizar todas las listas
-        ttk.Button(self.pestaña_pedidos, text="Actualizar Listas de Pedidos", 
-                  command=self.actualizar_listas_pedidos).pack(pady=10)
+        # Botones para gestión de pedidos
+        frame_botones_pedidos = ttk.Frame(frame_gestion_pedidos)
+        frame_botones_pedidos.pack(pady=5)
+        
+        ttk.Button(frame_botones_pedidos, text="Asignar Pedido a Conductor", 
+                  command=self.asignar_pedido_conductor).pack(side="left", padx=5)
+        
+        ttk.Button(frame_botones_pedidos, text="Marcar Pedido como Terminado", 
+                  command=self.marcar_pedido_terminado_admin).pack(side="left", padx=5)
+        
+        ttk.Button(frame_botones_pedidos, text="Actualizar Todas las Listas", 
+                  command=self.actualizar_listas_admin).pack(side="left", padx=5)
+        
+        # Botón para actualizar lista de conductores
+        ttk.Button(frame_conductores, text="Actualizar Lista de Conductores", 
+                  command=self.actualizar_lista_conductores).pack(pady=5)
         
         # Inicializar listas
+        self.actualizar_lista_conductores()
+        self.actualizar_lista_pedidos_disponibles()
         self.actualizar_listas_pedidos()
     
     def crear_pestaña_vehiculos(self):
@@ -882,54 +961,36 @@ class InterfazAdmin:
         self.texto_reporte.insert(tk.END, f"• Total multas: ${total_multas if multas_periodo else 0:,.2f}\n")
 
     def actualizar_listas_pedidos(self):
-        """Función para actualizar todas las listas de pedidos según su estado"""
-        # Recargar pedidos para asegurar datos actualizados
-        self.cargar_pedidos_recientes()
+        """Actualiza las listas de pedidos en curso y completados"""
+        # Limpiar listas
+        for item in self.tree_pedidos_curso.get_children():
+            self.tree_pedidos_curso.delete(item)
         
-        # Limpiar todas las listas
-        for tree in [self.tree_pedidos_espera, self.tree_pedidos_curso, self.tree_pedidos_completado]:
-            for item in tree.get_children():
-                tree.delete(item)
+        for item in self.tree_pedidos_completados.get_children():
+            self.tree_pedidos_completados.delete(item)
         
-        # Clasificar pedidos por estado
+        # Agregar pedidos en curso
         for pedido in PEDIDOS:
-            # Formatear items para mostrar
-            items_texto = []
-            for item in pedido.items:
-                items_texto.append(f"{item['cantidad']}x {item['nombre']}")
-            items_str = ", ".join(items_texto)
-            
-            # Formatear fecha
-            fecha_str = pedido.fecha_creacion.strftime("%d/%m/%Y %H:%M") if pedido.fecha_creacion else "N/A"
-            
-            # Agregar a la lista correspondiente según el estado
-            if pedido.estado == "pendiente":
-                self.tree_pedidos_espera.insert("", "end", values=(
-                    pedido.id,
-                    pedido.usuario,
-                    items_str,
-                    pedido.direccion_destino,
-                    fecha_str
-                ))
-            elif pedido.estado == "en_proceso":
+            if pedido.estado == "en_proceso":
                 self.tree_pedidos_curso.insert("", "end", values=(
                     pedido.id,
                     pedido.usuario,
-                    items_str,
                     pedido.direccion_destino,
                     pedido.conductor or "Sin asignar",
-                    fecha_str
+                    pedido.fecha_creacion.strftime("%d/%m/%Y %H:%M") if pedido.fecha_creacion else "N/A"
                 ))
-            elif pedido.estado == "completado":
-                self.tree_pedidos_completado.insert("", "end", values=(
+        
+        # Agregar pedidos completados
+        for pedido in PEDIDOS:
+            if pedido.estado == "completado":
+                self.tree_pedidos_completados.insert("", "end", values=(
                     pedido.id,
                     pedido.usuario,
-                    items_str,
                     pedido.direccion_destino,
                     pedido.conductor or "Sin asignar",
-                    fecha_str
+                    pedido.fecha_creacion.strftime("%d/%m/%Y %H:%M") if pedido.fecha_creacion else "N/A"
                 ))
-    
+
     def cerrar_admin(self):
         self.root.destroy()
         if self.parent:
@@ -942,6 +1003,290 @@ class InterfazAdmin:
     def on_tab_changed(self, event):
         if self.notebook.index(self.notebook.select()) == 4:  # Verifica si se ha cambiado a la pestaña de multas
             self.actualizar_combobox_responsables()
+
+    def agregar_conductor(self):
+        try:
+            if not all([self.nombre_conductor.get(), self.dni_conductor.get(), self.telefono_conductor.get()]):
+                messagebox.showerror("Error", "Por favor complete todos los campos")
+                return
+            
+            # Cargar conductores existentes
+            conductores = cargar_conductores()
+            
+            # Verificar si ya existe un conductor con esa cédula
+            if any(c.get("dni") == self.dni_conductor.get() for c in conductores):
+                messagebox.showerror("Error", "Ya existe un conductor con esa cédula")
+                return
+            
+            # Crear nuevo conductor
+            nuevo_conductor = {
+                "nombre": self.nombre_conductor.get(),
+                "dni": self.dni_conductor.get(),
+                "telefono": self.telefono_conductor.get(),
+                "licencia": self.licencia_conductor.get(),
+                "estado": "disponible",
+                "usuario": self.usuario_conductor.get(),
+                "password": self.password_conductor.get()
+            }
+            
+            conductores.append(nuevo_conductor)
+            guardar_conductores(conductores)
+            
+            # Limpiar campos
+            self.limpiar_campos_conductor()
+            
+            # Actualizar lista
+            self.actualizar_lista_conductores()
+            
+            messagebox.showinfo("Éxito", "Conductor agregado correctamente")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al agregar conductor: {str(e)}")
+    
+    def editar_conductor(self):
+        seleccion = self.tree_conductores.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un conductor")
+            return
+        
+        try:
+            valores = self.tree_conductores.item(seleccion[0])["values"]
+            nombre = valores[0]
+            
+            # Cargar conductores y encontrar el seleccionado
+            conductores = cargar_conductores()
+            conductor = next((c for c in conductores if c.get("nombre") == nombre), None)
+            
+            if conductor:
+                self.nombre_conductor.set(conductor.get("nombre", ""))
+                self.dni_conductor.set(conductor.get("dni", ""))
+                self.telefono_conductor.set(conductor.get("telefono", ""))
+                self.licencia_conductor.set(conductor.get("licencia", "B1"))
+                self.usuario_conductor.set(conductor.get("usuario", ""))
+                self.password_conductor.set(conductor.get("password", ""))
+                self.conductor_editando = conductor
+                
+                messagebox.showinfo("Éxito", "Conductor seleccionado para editar")
+            else:
+                messagebox.showerror("Error", "Conductor no encontrado")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al seleccionar conductor: {str(e)}")
+    
+    def actualizar_conductor(self):
+        try:
+            if not self.conductor_editando:
+                messagebox.showwarning("Advertencia", "Por favor seleccione un conductor para editar primero")
+                return
+                
+            if not all([self.nombre_conductor.get(), self.dni_conductor.get(), self.telefono_conductor.get()]):
+                messagebox.showerror("Error", "Por favor complete todos los campos")
+                return
+            
+            # Cargar conductores
+            conductores = cargar_conductores()
+            
+            # Verificar si el DNI ya existe en otro conductor
+            for c in conductores:
+                if c != self.conductor_editando and c.get("dni") == self.dni_conductor.get():
+                    messagebox.showerror("Error", "Ya existe otro conductor con ese DNI")
+                    return
+            
+            # Actualizar el conductor
+            self.conductor_editando["nombre"] = self.nombre_conductor.get()
+            self.conductor_editando["dni"] = self.dni_conductor.get()
+            self.conductor_editando["telefono"] = self.telefono_conductor.get()
+            self.conductor_editando["licencia"] = self.licencia_conductor.get()
+            self.conductor_editando["usuario"] = self.usuario_conductor.get()
+            self.conductor_editando["password"] = self.password_conductor.get()
+            
+            guardar_conductores(conductores)
+            
+            # Limpiar campos y modo edición
+            self.limpiar_campos_conductor()
+            self.conductor_editando = None
+            
+            # Actualizar lista
+            self.actualizar_lista_conductores()
+            
+            messagebox.showinfo("Éxito", "Conductor actualizado correctamente")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al actualizar conductor: {str(e)}")
+    
+    def cancelar_edicion_conductor(self):
+        self.limpiar_campos_conductor()
+        self.conductor_editando = None
+        messagebox.showinfo("Información", "Edición cancelada")
+    
+    def limpiar_campos_conductor(self):
+        self.nombre_conductor.set("")
+        self.dni_conductor.set("")
+        self.telefono_conductor.set("")
+        self.licencia_conductor.set("B1")
+        self.usuario_conductor.set("")
+        self.password_conductor.set("")
+    
+    def actualizar_lista_conductores(self):
+        # Limpiar lista actual
+        for item in self.tree_conductores.get_children():
+            self.tree_conductores.delete(item)
+        
+        # Cargar la lista de conductores desde el JSON
+        conductores = cargar_conductores()
+        
+        # Verificar qué conductores están ocupados basado en pedidos en proceso
+        for pedido in PEDIDOS:
+            if pedido.estado == "en_proceso" and pedido.conductor:
+                for conductor in conductores:
+                    if conductor["nombre"] == pedido.conductor:
+                        conductor["estado"] = "ocupado"
+        
+        # Guardar cambios de estado
+        guardar_conductores(conductores)
+        
+        # Agregar conductores a la lista
+        for conductor in conductores:
+            # Buscar pedido actual del conductor
+            pedido_actual = next((p for p in PEDIDOS if p.conductor == conductor["nombre"] and p.estado == "en_proceso"), None)
+            pedido_info = f"#{pedido_actual.id}" if pedido_actual else "Sin pedido"
+            
+            self.tree_conductores.insert("", "end", values=(
+                conductor["nombre"],
+                conductor.get("licencia", "B1"),
+                conductor["estado"],
+                pedido_info
+            ))
+    
+    def asignar_pedido_conductor(self):
+        # Obtener pedido seleccionado
+        seleccion_pedido = self.tree_pedidos_disponibles.selection()
+        if not seleccion_pedido:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
+            return
+        
+        # Obtener conductor seleccionado
+        seleccion_conductor = self.tree_conductores.selection()
+        if not seleccion_conductor:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un conductor")
+            return
+        
+        try:
+            # Obtener ID del pedido
+            valores_pedido = self.tree_pedidos_disponibles.item(seleccion_pedido[0])["values"]
+            id_pedido = valores_pedido[0]
+            
+            # Obtener nombre del conductor
+            valores_conductor = self.tree_conductores.item(seleccion_conductor[0])["values"]
+            nombre_conductor = valores_conductor[0]
+            
+            # Verificar que el conductor esté disponible
+            if valores_conductor[2] == "ocupado":
+                messagebox.showerror("Error", "Este conductor ya tiene un pedido asignado")
+                return
+            
+            # Encontrar pedido
+            pedido = next((p for p in PEDIDOS if p.id == id_pedido), None)
+            if not pedido:
+                messagebox.showerror("Error", "Pedido no encontrado")
+                return
+            
+            # Asignar pedido al conductor
+            pedido.estado = "en_proceso"
+            pedido.conductor = nombre_conductor
+            
+            # Guardar cambios
+            self.guardar_pedidos()
+            
+            # Actualizar listas
+            self.actualizar_lista_conductores()
+            self.actualizar_lista_pedidos_disponibles()
+            self.actualizar_listas_pedidos()
+            
+            messagebox.showinfo("Éxito", f"Pedido #{pedido.id} asignado a {nombre_conductor}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al asignar pedido: {str(e)}")
+    
+    def marcar_pedido_terminado_admin(self):
+        # Obtener pedido seleccionado de la lista de pedidos en curso
+        seleccion = self.tree_pedidos_curso.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un pedido en curso")
+            return
+        
+        try:
+            valores = self.tree_pedidos_curso.item(seleccion[0])["values"]
+            id_pedido = valores[0]
+            
+            # Encontrar pedido
+            pedido = next((p for p in PEDIDOS if p.id == id_pedido), None)
+            if not pedido:
+                messagebox.showerror("Error", "Pedido no encontrado")
+                return
+            
+            # Marcar como terminado
+            pedido.estado = "completado"
+            pedido.conductor = None
+            
+            # Guardar cambios
+            self.guardar_pedidos()
+            
+            # Actualizar listas
+            self.actualizar_lista_conductores()
+            self.actualizar_listas_pedidos()
+            
+            messagebox.showinfo("Éxito", f"Pedido #{pedido.id} marcado como terminado")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al marcar pedido como terminado: {str(e)}")
+    
+    def actualizar_listas_admin(self):
+        """Actualiza todas las listas de la pestaña de conductores"""
+        self.actualizar_lista_conductores()
+        self.actualizar_lista_pedidos_disponibles()
+        self.actualizar_listas_pedidos()
+    
+    def guardar_pedidos(self):
+        """Guarda los pedidos en el archivo JSON"""
+        try:
+            # Convertir pedidos a formato JSON
+            pedidos_data = []
+            for pedido in PEDIDOS:
+                pedido_dict = {
+                    "id": pedido.id,
+                    "usuario": pedido.usuario,
+                    "items": pedido.items,
+                    "direccion_destino": pedido.direccion_destino,
+                    "estado": pedido.estado,
+                    "conductor": pedido.conductor,
+                    "fecha_creacion": pedido.fecha_creacion.isoformat() if pedido.fecha_creacion else None
+                }
+                pedidos_data.append(pedido_dict)
+            
+            # Guardar en archivo
+            with open("data/pedidos.json", "w", encoding="utf-8") as f:
+                json.dump(pedidos_data, f, indent=4, ensure_ascii=False)
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al guardar pedidos: {str(e)}")
+
+    def actualizar_lista_pedidos_disponibles(self):
+        """Actualiza la lista de pedidos disponibles"""
+        # Limpiar lista actual
+        for item in self.tree_pedidos_disponibles.get_children():
+            self.tree_pedidos_disponibles.delete(item)
+        
+        # Agregar pedidos pendientes
+        for pedido in PEDIDOS:
+            if pedido.estado == "pendiente":
+                self.tree_pedidos_disponibles.insert("", "end", values=(
+                    pedido.id,
+                    pedido.usuario,
+                    pedido.direccion_destino,
+                    ", ".join([f"{item['cantidad']}x {item['nombre']}" for item in pedido.items]),
+                    pedido.fecha_creacion.strftime("%d/%m/%Y %H:%M") if pedido.fecha_creacion else "N/A"
+                ))
 
 if __name__ == "__main__":
     root = tk.Tk()

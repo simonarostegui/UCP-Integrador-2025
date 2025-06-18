@@ -13,83 +13,316 @@ import googlemaps
 import os
 from dotenv import load_dotenv
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+
+# Cargar variables de entorno
+load_dotenv()
 
 class CalculadoraLogistica:
     def __init__(self, root, parent=None):
-        self.peso_carga = tk.DoubleVar(value=500) # 500 kg
-        self.vehiculo_seleccionado = tk.StringVar(value="Citroën Berlingo Furgón")
+        self.root = root
+        self.parent = parent
+        self.conductor_actual = None
         
-        # Vehiculo Personalizado
+        # Configurar ventana
+        self.root.title("Sistema de Logística - Login")
+        self.root.geometry("400x300")
+        self.root.resizable(False, False)
+        
+        # Centrar ventana
+        self.centrar_ventana()
+        
+        # Crear interfaz de login
+        self.crear_interfaz_login()
+        
+        # Inicializar geocoder para direcciones
+        self.geocoder = Nominatim(user_agent="logistica_app")
+    
+    def centrar_ventana(self):
+        """Centra la ventana en la pantalla"""
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+    
+    def crear_interfaz_login(self):
+        """Crea la interfaz de login"""
+        # Frame principal
+        frame_principal = ttk.Frame(self.root)
+        frame_principal.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Título
+        ttk.Label(frame_principal, text="SISTEMA DE LOGÍSTICA", 
+                 font=("Arial", 16, "bold")).pack(pady=20)
+        
+        ttk.Label(frame_principal, text="Login de Conductor", 
+                 font=("Arial", 12)).pack(pady=10)
+        
+        # Frame para formulario
+        frame_formulario = ttk.LabelFrame(frame_principal, text="Credenciales")
+        frame_formulario.pack(fill="x", pady=20)
+        
+        # Variables para login
+        self.usuario_conductor = tk.StringVar()
+        self.password_conductor = tk.StringVar()
+        
+        # Campos del formulario
+        ttk.Label(frame_formulario, text="Usuario:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        entry_usuario = ttk.Entry(frame_formulario, textvariable=self.usuario_conductor, width=25)
+        entry_usuario.grid(row=0, column=1, padx=10, pady=10)
+        
+        ttk.Label(frame_formulario, text="Contraseña:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        entry_password = ttk.Entry(frame_formulario, textvariable=self.password_conductor, show="*", width=25)
+        entry_password.grid(row=1, column=1, padx=10, pady=10)
+        
+        # Configurar Enter para hacer login
+        entry_usuario.bind('<Return>', lambda e: self.login_conductor())
+        entry_password.bind('<Return>', lambda e: self.login_conductor())
+        
+        # Botones
+        frame_botones = ttk.Frame(frame_principal)
+        frame_botones.pack(pady=20)
+        
+        # Botón principal de login (ahora con ttk y fuente grande)
+        btn_login = ttk.Button(
+            frame_botones,
+            text="INICIAR SESIÓN",
+            command=self.login_conductor
+        )
+        btn_login.pack(pady=10, ipadx=20, ipady=10)  # Más grande y visible
+        
+        # Botón cancelar
+        ttk.Button(
+            frame_botones,
+            text="Cancelar",
+            command=self.cancelar_login,
+            width=15
+        ).pack(pady=5)
+        
+        # Información de credenciales de prueba
+        frame_info = ttk.LabelFrame(frame_principal, text="Credenciales de Prueba")
+        frame_info.pack(fill="x", pady=10)
+        
+        info_text = "Usuario: juan.perez | Contraseña: juan.perez123\n"
+        info_text += "Usuario: maria.garcia | Contraseña: maria.garcia123\n"
+        info_text += "Usuario: carlos.lopez | Contraseña: carlos.lopez123\n"
+        info_text += "Usuario: jorge.luis | Contraseña: jorge.luis123"
+        
+        ttk.Label(frame_info, text=info_text, font=("Arial", 8), 
+                 justify="left").pack(padx=10, pady=5)
+        
+        # Instrucciones
+        ttk.Label(frame_principal, text="Presiona Enter en cualquier campo para iniciar sesión", 
+                 font=("Arial", 9), foreground="gray").pack(pady=5)
+        
+        # Enfocar en el campo de usuario
+        entry_usuario.focus()
+    
+    def login_conductor(self):
+        """Función de login"""
+        usuario = self.usuario_conductor.get()
+        password = self.password_conductor.get()
+        
+        if not usuario or not password:
+            messagebox.showerror("Error", "Por favor complete usuario y contraseña")
+            return
+        
+        # Buscar conductor en la lista
+        conductores = cargar_conductores()
+        conductor = next((c for c in conductores if c.get("usuario") == usuario), None)
+        
+        if not conductor:
+            messagebox.showerror("Error", "Usuario no encontrado")
+            return
+        
+        # Verificar contraseña
+        if password != conductor.get("password"):
+            messagebox.showerror("Error", "Contraseña incorrecta")
+            return
+        
+        # Login exitoso - permitir acceso aunque tenga pedido asignado
+        self.conductor_actual = conductor
+        
+        # Mostrar mensaje de bienvenida
+        if conductor["estado"] == "ocupado":
+            messagebox.showinfo("Bienvenido", 
+                f"Bienvenido, {conductor['nombre']}\n\nNota: Tienes un pedido asignado actualmente.")
+        else:
+            messagebox.showinfo("Bienvenido", f"Bienvenido, {conductor['nombre']}")
+        
+        # Inicializar la interfaz completa de logística
+        self.inicializar_interfaz_logistica()
+    
+    def cancelar_login(self):
+        """Cancela el login y cierra la ventana"""
+        self.cerrar_logistica()
+    
+    def inicializar_interfaz_logistica(self):
+        """Inicializa la interfaz completa de logística después del login"""
+        # Limpiar ventana
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Configurar ventana para logística
+        self.root.title(f"Sistema de Logística - {self.conductor_actual['nombre']}")
+        self.root.geometry("1200x800")
+        self.root.resizable(True, True)
+        
+        # Inicializar variables y archivos
+        self.inicializar_variables()
+        
+        # Crear interfaz completa
+        self.crear_interfaz_completa()
+    
+    def inicializar_variables(self):
+        """Inicializa todas las variables necesarias para logística"""
+        # Directorio de datos
+        self.data_dir = "data"
+        self.pedidos_file = os.path.join(self.data_dir, "pedidos.json")
+        
+        # Variables para vehículos
+        self.vehiculo_seleccionado = tk.StringVar(value="Citroën Berlingo Furgón")
+        self.peso_carga = tk.DoubleVar(value=1000)
+        
+        # Variables para nuevo vehículo
         self.nombre_vehiculo = tk.StringVar()
-        self.capacidad_vehiculo = tk.DoubleVar()
-        self.volumen_vehiculo = tk.DoubleVar()
-        self.consumo_vehiculo = tk.DoubleVar()
+        self.capacidad_vehiculo = tk.DoubleVar(value=0)
+        self.volumen_vehiculo = tk.DoubleVar(value=0)
+        self.consumo_vehiculo = tk.DoubleVar(value=0)
         self.tipo_combustible = tk.StringVar(value="Nafta Premium")
         self.costo_combustible = tk.DoubleVar(value=1100)
         self.costo_mantenimiento = tk.DoubleVar(value=12000)
         
-        # Geocoder
-        self.geocoder = Nominatim(user_agent="calculadora_logistica")
+        # Variables para mapa
+        self.ruta_actual = None
+        self.destino_direccion = tk.StringVar()
         
-        # Google Maps
-        load_dotenv()  # Cargar variables de entorno
-        api_key = os.getenv('GOOGLE_MAPS_API_KEY')
-        if not api_key:
-            messagebox.showerror("Error", 
-                "No se encontró la clave de API de Google Maps.\n" +
-                "Por favor, crea un archivo .env con tu clave de API:\n" +
-                "GOOGLE_MAPS_API_KEY=tu_clave_aqui")
-            root.destroy()
-            return
-            
-        try:
-            self.gmaps = googlemaps.Client(key=api_key)
-            # Usar geopy para obtener coordenadas precisas
-            origen = self.geocoder.geocode("Puerto de Rosario, Santa Fe, Argentina")
-            destino = self.geocoder.geocode("Rosario, Santa Fe, Argentina")
-            if not origen or not destino:
-                raise Exception("No se pudo geocodificar una de las direcciones.")
-            origen_coords = f"{origen.latitude},{origen.longitude}"
-            destino_coords = f"{destino.latitude},{destino.longitude}"
-            # Verificar que la API funciona usando coordenadas
-            self.gmaps.directions(
-                origen_coords,
-                destino_coords,
-                mode="driving"
-            )
-        except Exception as e:
-            messagebox.showerror("Error", 
-                f"Error al inicializar Google Maps API: {str(e)}\n" +
-                "Por favor, verifica tu clave de API, la API de Directions y las direcciones.")
-            root.destroy()
-            return
-        
-        # Ventana Principal
-        self.root = root
-        self.parent = parent
-        self.root.title("Calculadora de Logística")
-        self.root.geometry("1200x800")
-        self.root.protocol("WM_DELETE_WINDOW", self.cerrar_logistica)
-        
-        self.marco_principal = ttk.Frame(root)
-        self.marco_principal.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        # Inicializar variables de archivo antes de cargar pedidos
-        self.data_dir = "data"
-        self.pedidos_file = os.path.join(self.data_dir, "pedidos.json")
-        
-        # mapa
-        self.crear_panel_mapa()
-        
-        # calculos
-        self.crear_panel_calculos()
-        
-        # Cargar pedidos después de que todo esté inicializado
+        # Cargar datos
         self.cargar_pedidos()
         
+        # Configurar Google Maps
+        try:
+            api_key = os.getenv('GOOGLE_MAPS_API_KEY')
+            if api_key and api_key != 'TU_API_KEY_AQUI':
+                self.gmaps = googlemaps.Client(key=api_key)
+            else:
+                self.gmaps = None
+        except Exception as e:
+            self.gmaps = None
+            print(f"Advertencia: No se pudo configurar Google Maps - Error: {e}")
+    
+    def crear_interfaz_completa(self):
+        """Crea la interfaz completa de logística"""
+        # Frame principal
+        self.frame_principal = ttk.Frame(self.root)
+        self.frame_principal.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Barra de información del conductor
+        frame_conductor_info = ttk.Frame(self.frame_principal)
+        frame_conductor_info.pack(fill="x", pady=(0, 10))
+        
+        ttk.Label(frame_conductor_info, 
+                 text=f"Conductor: {self.conductor_actual['nombre']} - {self.conductor_actual['licencia']}", 
+                 font=("Arial", 12, "bold")).pack(side="left")
+        
+        ttk.Button(frame_conductor_info, text="Cerrar Sesión", 
+                  command=self.logout_conductor).pack(side="right")
+        
+        # Frame para información de pedidos del conductor
+        frame_pedidos_conductor = ttk.LabelFrame(self.frame_principal, text="Mis Pedidos")
+        frame_pedidos_conductor.pack(fill="x", pady=(0, 10))
+        
+        # Treeview para pedidos del conductor
+        self.tree_pedidos_conductor = ttk.Treeview(frame_pedidos_conductor, 
+                                                  columns=("id", "usuario", "direccion", "items", "estado"), 
+                                                  show="headings", height=3)
+        self.tree_pedidos_conductor.heading("id", text="ID")
+        self.tree_pedidos_conductor.heading("usuario", text="Cliente")
+        self.tree_pedidos_conductor.heading("direccion", text="Dirección")
+        self.tree_pedidos_conductor.heading("items", text="Items")
+        self.tree_pedidos_conductor.heading("estado", text="Estado")
+        self.tree_pedidos_conductor.pack(fill="x", pady=5)
+        
+        # Botones para conductor
+        frame_botones_conductor = ttk.Frame(frame_pedidos_conductor)
+        frame_botones_conductor.pack(pady=5)
+        
+        ttk.Button(frame_botones_conductor, text="Tomar Pedido Disponible", 
+                  command=self.tomar_pedido_automatico).pack(side="left", padx=5)
+        
+        ttk.Button(frame_botones_conductor, text="Marcar Pedido como Terminado", 
+                  command=self.marcar_pedido_terminado_conductor).pack(side="left", padx=5)
+        
+        ttk.Button(frame_botones_conductor, text="Cargar Dirección al Mapa", 
+                  command=self.cargar_direccion_pedido).pack(side="left", padx=5)
+        
+        ttk.Button(frame_botones_conductor, text="Actualizar Lista", 
+                  command=self.actualizar_pedidos_conductor).pack(side="left", padx=5)
+        
+        # Notebook para pestañas principales
+        self.notebook = ttk.Notebook(self.frame_principal)
+        self.notebook.pack(fill="both", expand=True)
+        
+        # Crear pestañas principales
+        self.crear_pestaña_mapa()
+        self.crear_pestaña_calculos()
+        
+        # Botón para cerrar
+        ttk.Button(self.frame_principal, text="Cerrar", 
+                  command=self.cerrar_logistica).pack(pady=10)
+        
+        # Inicializar lista de pedidos del conductor
+        self.actualizar_pedidos_conductor()
+    
+    def crear_pestaña_mapa(self):
+        """Crea la pestaña del mapa"""
+        self.pestaña_mapa = ttk.Frame(self.notebook)
+        self.notebook.add(self.pestaña_mapa, text="Mapa")
+        self.crear_panel_mapa()
+    
+    def crear_pestaña_calculos(self):
+        """Crea la pestaña de cálculos"""
+        self.pestaña_calculos = ttk.Frame(self.notebook)
+        self.notebook.add(self.pestaña_calculos, text="Cálculos")
+        self.crear_panel_calculos()
+    
+    def logout_conductor(self):
+        """Cierra la sesión del conductor"""
+        if self.conductor_actual:
+            # Verificar si tiene un pedido en proceso
+            pedido_actual = next((p for p in PEDIDOS if p.conductor == self.conductor_actual["nombre"] and p.estado == "en_proceso"), None)
+            
+            if pedido_actual:
+                respuesta = messagebox.askyesno("Confirmar", 
+                    f"Tienes el pedido #{pedido_actual.id} en proceso. ¿Estás seguro de que quieres cerrar sesión?")
+                if not respuesta:
+                    return
+        
+        # Volver a la interfaz de login
+        self.conductor_actual = None
+        self.inicializar_interfaz_login()
+    
+    def inicializar_interfaz_login(self):
+        """Vuelve a la interfaz de login"""
+        # Limpiar ventana
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Configurar ventana para login
+        self.root.title("Sistema de Logística - Login")
+        self.root.geometry("400x300")
+        self.root.resizable(False, False)
+        
+        # Centrar ventana
+        self.centrar_ventana()
+        
+        # Crear interfaz de login
+        self.crear_interfaz_login()
+
     def crear_panel_mapa(self):
-        marco_mapa = ttk.LabelFrame(self.marco_principal, text="Mapa de Ruta")
+        marco_mapa = ttk.LabelFrame(self.pestaña_mapa, text="Mapa de Ruta")
         marco_mapa.pack(side="left", fill="both", expand=True, padx=5, pady=5)
         
         self.mapa = TkinterMapView(marco_mapa, width=600, height=500, corner_radius=0)
@@ -103,35 +336,22 @@ class CalculadoraLogistica:
         self.ruta_actual = None
         
     def crear_panel_calculos(self):
-        marco_calculos = ttk.LabelFrame(self.marco_principal, text="Cálculos")
+        marco_calculos = ttk.LabelFrame(self.pestaña_calculos, text="Cálculos")
         marco_calculos.pack(side="right", fill="both", expand=True, padx=5, pady=5)
-        
+
         # Crear pestañas
         notebook = ttk.Notebook(marco_calculos)
         notebook.pack(fill="both", expand=True, padx=5, pady=5)
-        
-        # Pestaña de pedidos
+
+        # Pestaña de cálculo primero
+        pestaña_calculo = ttk.Frame(notebook)
+        notebook.add(pestaña_calculo, text="Cálculo")
         pestaña_pedidos = ttk.Frame(notebook)
         notebook.add(pestaña_pedidos, text="Pedidos")
-        
-        # Pestaña de gestión de conductores
-        pestaña_conductores = ttk.Frame(notebook)
-        notebook.add(pestaña_conductores, text="Gestión de Conductores")
-        
-        # Pestaña de cálculo
-        pestaña_calculo = ttk.Frame(notebook)
-        notebook.add(pestaña_calculo, text="Cálculo de Ruta")
-        
-        # Pestaña de nuevo vehículo
-        pestaña_vehiculo = ttk.Frame(notebook)
-        notebook.add(pestaña_vehiculo, text="Nuevo Vehículo")
-        
         # Crear paneles
-        self.crear_panel_pedidos(pestaña_pedidos)
-        self.crear_panel_conductores(pestaña_conductores)
         self.crear_panel_calculo_ruta(pestaña_calculo)
-        self.crear_panel_nuevo_vehiculo(pestaña_vehiculo)
-        
+        self.crear_panel_pedidos(pestaña_pedidos)
+    
     def crear_panel_pedidos(self, parent):
         # Frame para lista de pedidos
         frame_pedidos = ttk.LabelFrame(parent, text="Gestión de Pedidos")
@@ -165,7 +385,7 @@ class CalculadoraLogistica:
         
         # Botón para marcar pedido como terminado
         ttk.Button(frame_pedidos, text="Marcar Pedido como Terminado", 
-                  command=self.marcar_pedido_terminado).pack(pady=5)
+                  command=self.marcar_pedido_terminado_general).pack(pady=5)
         
         # Botón para actualizar lista
         ttk.Button(frame_pedidos, text="Actualizar Lista", 
@@ -224,7 +444,7 @@ class CalculadoraLogistica:
             self.guardar_pedidos()
             messagebox.showinfo("Éxito", f"Pedido #{pedido_id} tomado exitosamente")
             self.actualizar_lista_pedidos()
-            self.actualizar_lista_conductores()  # Actualizar estado de conductores
+            self.actualizar_pedidos_conductor()
             
             # Establecer dirección de destino en el mapa
             self.destino_direccion.set(pedido.direccion_destino)
@@ -248,107 +468,38 @@ class CalculadoraLogistica:
             json.dump(pedidos_data, f, ensure_ascii=False, indent=4)
     
     def crear_panel_calculo_ruta(self, parent):
-        # Frame para ruta
-        frame_ruta = ttk.LabelFrame(parent, text="Cálculo de Ruta")
-        frame_ruta.pack(fill="x", padx=5, pady=5)
-        
+        # Layout horizontal: frame_ruta a la izquierda, resultados a la derecha
+        frame_main = ttk.Frame(parent)
+        frame_main.pack(fill="both", expand=True)
+
+        frame_ruta = ttk.LabelFrame(frame_main, text="Cálculo de Ruta")
+        frame_ruta.pack(side="left", fill="y", padx=5, pady=5, ipadx=5, ipady=5)
+
         # vehiculos
         ttk.Label(frame_ruta, text="Vehículo:").pack(pady=5)
         combo_vehiculo = ttk.Combobox(frame_ruta, textvariable=self.vehiculo_seleccionado)
         combo_vehiculo['values'] = list(VEHICULOS_DISPONIBLES.keys())
         combo_vehiculo.pack(pady=5)
-        
         # peso de carga
         ttk.Label(frame_ruta, text="Peso de Carga (kg):").pack(pady=5)
         ttk.Entry(frame_ruta, textvariable=self.peso_carga).pack(pady=5)
-        
         # destino personalizado
         ttk.Label(frame_ruta, text="Dirección de Destino:").pack(pady=5)
         self.destino_direccion = tk.StringVar()
         ttk.Entry(frame_ruta, textvariable=self.destino_direccion, width=40).pack(pady=5)
-        
         ttk.Button(frame_ruta, text="Calcular Mejor Ruta", 
                   command=self.calcular_mejor_ruta).pack(pady=20)
-        
-        # resultados
-        self.marco_resultados = ttk.LabelFrame(parent, text="Resultados")
-        self.marco_resultados.pack(fill="both", expand=True, pady=10)
-        
-    def crear_panel_nuevo_vehiculo(self, parent):
-        # campos para nuevo vehiculo
-        ttk.Label(parent, text="Nombre del Vehículo:").pack(pady=5)
-        ttk.Entry(parent, textvariable=self.nombre_vehiculo).pack(pady=5)
-        
-        ttk.Label(parent, text="Capacidad (kg):").pack(pady=5)
-        ttk.Entry(parent, textvariable=self.capacidad_vehiculo).pack(pady=5)
-        
-        ttk.Label(parent, text="Volumen (m³):").pack(pady=5)
-        ttk.Entry(parent, textvariable=self.volumen_vehiculo).pack(pady=5)
-        
-        ttk.Label(parent, text="Consumo (L/100km):").pack(pady=5)
-        ttk.Entry(parent, textvariable=self.consumo_vehiculo).pack(pady=5)
-        
-        ttk.Label(parent, text="Tipo de Combustible:").pack(pady=5)
-        ttk.Combobox(parent, textvariable=self.tipo_combustible, 
-                    values=["Nafta Premium", "Nafta Regular", "Gasoil"]).pack(pady=5)
-        
-        ttk.Label(parent, text="Costo Combustible (pesos/L):").pack(pady=5)
-        ttk.Entry(parent, textvariable=self.costo_combustible).pack(pady=5)
-        
-        ttk.Label(parent, text="Costo Mantenimiento (pesos/km):").pack(pady=5)
-        ttk.Entry(parent, textvariable=self.costo_mantenimiento).pack(pady=5)
-        
-        # boton para agregar vehiculo
-        ttk.Button(parent, text="Agregar Vehículo", 
-                  command=self.agregar_vehiculo).pack(pady=20)
-        
-    def agregar_vehiculo(self):
-        try:
-            # validar que todos los campos esten completos
-            if not all([self.nombre_vehiculo.get(), 
-                       self.capacidad_vehiculo.get(),
-                       self.volumen_vehiculo.get(),
-                       self.consumo_vehiculo.get(),
-                       self.tipo_combustible.get(),
-                       self.costo_combustible.get(),
-                       self.costo_mantenimiento.get()]):
-                messagebox.showerror("Error", "Por favor complete todos los campos")
-                return
-            
-            # si pasa todos los campos, se crea el vehiculo
-            nuevo_vehiculo = Vehiculo(
-                nombre=self.nombre_vehiculo.get(),
-                capacidad_kg=self.capacidad_vehiculo.get(),
-                volumen_m3=self.volumen_vehiculo.get(),
-                consumo_combustible=self.consumo_vehiculo.get(),
-                tipo_combustible=self.tipo_combustible.get(),
-                costo_combustible_por_litro=self.costo_combustible.get(),
-                costo_mantenimiento_por_km=self.costo_mantenimiento.get()
-            )
-            
-            # agregar a la lista de vehiculos disponibles
-            clave = self.nombre_vehiculo.get().lower().replace(" ", "_")
-            VEHICULOS_DISPONIBLES[clave] = nuevo_vehiculo
-            
-            # actualizar la lista de vehiculos disponibles
-            self.vehiculo_seleccionado.set(clave)
-            
-            messagebox.showinfo("Éxito", "Vehículo agregado correctamente")
-            
-            # limpiar campos
-            self.nombre_vehiculo.set("")
-            self.capacidad_vehiculo.set(0)
-            self.volumen_vehiculo.set(0)
-            self.consumo_vehiculo.set(0)
-            self.tipo_combustible.set("Nafta Premium")
-            self.costo_combustible.set(1100)
-            self.costo_mantenimiento.set(12000)
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Error al agregar vehículo: {str(e)}")
-    
-    # API de OSRM para obtener la ruta real entre los puntos dados
-    # https://github.com/Project-OSRM/osrm-backend/
+
+        # Resultados a la derecha, más grande y con scroll
+        frame_resultados = ttk.LabelFrame(frame_main, text="Resultados")
+        frame_resultados.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        self.text_resultados = tk.Text(frame_resultados, wrap="word", height=20)
+        self.text_resultados.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        scrollbar = ttk.Scrollbar(frame_resultados, orient="vertical", command=self.text_resultados.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.text_resultados.configure(yscrollcommand=scrollbar.set)
+        self.marco_resultados = frame_resultados
+
     def obtener_ruta_osrm(self, puntos):
         #solicita a OSRM la ruta real entre los puntos dados
         if len(puntos) < 2:
@@ -540,9 +691,8 @@ class CalculadoraLogistica:
             self.actualizar_ruta_mapa(mejor_ruta)
             
             # Limpiar resultados anteriores
-            for widget in self.marco_resultados.winfo_children():
-                widget.destroy()
-            
+            self.text_resultados.delete(1.0, tk.END)
+
             # Mostrar resultados
             resultados = [
                 f"Origen: Puerto de Rosario",
@@ -562,8 +712,8 @@ class CalculadoraLogistica:
                 resultados.insert(3, f"Viajes necesarios: {viajes_necesarios} (debido a la capacidad del vehículo)")
                 resultados.insert(4, f"Peso por viaje: {vehiculo.capacidad_kg:.1f} kg")
             
-            for resultado in resultados:
-                ttk.Label(self.marco_resultados, text=resultado).pack(pady=2)
+            self.text_resultados.insert(tk.END, "\n".join(resultados))
+            self.text_resultados.see(tk.END)
             
             # Verificar si el vehiculo puede transportar el peso
             if not vehiculo.puede_transportar_peso(peso):
@@ -610,184 +760,176 @@ class CalculadoraLogistica:
         if self.parent:
             self.parent.deiconify()
 
-    def crear_panel_conductores(self, parent):
-        # Frame para lista de conductores
-        frame_conductores = ttk.LabelFrame(parent, text="Conductores Disponibles")
-        frame_conductores.pack(fill="x", padx=5, pady=5)
-        
-        # Treeview para conductores
-        self.tree_conductores = ttk.Treeview(frame_conductores, 
-                                           columns=("nombre", "licencia", "estado"), 
-                                           show="headings", height=6)
-        self.tree_conductores.heading("nombre", text="Nombre")
-        self.tree_conductores.heading("licencia", text="Licencia")
-        self.tree_conductores.heading("estado", text="Estado")
-        self.tree_conductores.pack(fill="x", pady=5)
-        
-        # Frame para agregar conductor
-        frame_agregar = ttk.LabelFrame(parent, text="Agregar Conductor")
-        frame_agregar.pack(fill="x", padx=5, pady=5)
-        
-        # Variables para formulario
-        self.nombre_conductor = tk.StringVar()
-        self.licencia_conductor = tk.StringVar()
-        self.estado_conductor = tk.StringVar(value="disponible")
-        
-        # Campos del formulario
-        ttk.Label(frame_agregar, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        ttk.Entry(frame_agregar, textvariable=self.nombre_conductor, width=30).grid(row=0, column=1, padx=5, pady=5)
-        
-        ttk.Label(frame_agregar, text="Licencia:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-        ttk.Entry(frame_agregar, textvariable=self.licencia_conductor, width=20).grid(row=0, column=3, padx=5, pady=5)
-        
-        ttk.Label(frame_agregar, text="Estado:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        ttk.Combobox(frame_agregar, textvariable=self.estado_conductor, 
-                    values=["disponible", "ocupado", "descanso"]).grid(row=1, column=1, padx=5, pady=5)
-        
-        # Botones
-        ttk.Button(frame_agregar, text="Agregar Conductor", 
-                  command=self.agregar_conductor).grid(row=1, column=2, columnspan=2, padx=5, pady=5)
-        
-        # Frame para asignar conductor a pedido
-        frame_asignar = ttk.LabelFrame(parent, text="Asignar Conductor a Pedido")
-        frame_asignar.pack(fill="x", padx=5, pady=5)
-        
-        # Variables para asignación
-        self.pedido_asignar = tk.StringVar()
-        self.conductor_asignar = tk.StringVar()
-        
-        # Campos para asignación
-        ttk.Label(frame_asignar, text="Pedido ID:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        ttk.Entry(frame_asignar, textvariable=self.pedido_asignar, width=10).grid(row=0, column=1, padx=5, pady=5, sticky="w")
-        
-        ttk.Label(frame_asignar, text="Conductor:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-        self.combo_conductor_asignar = ttk.Combobox(frame_asignar, textvariable=self.conductor_asignar, 
-                    values=[c["nombre"] for c in cargar_conductores()])
-        self.combo_conductor_asignar.grid(row=0, column=3, padx=5, pady=5)
-        
-        # Botón para asignar
-        ttk.Button(frame_asignar, text="Asignar Conductor", 
-                  command=self.asignar_conductor_pedido).grid(row=1, column=0, columnspan=4, padx=5, pady=5)
-        
-        # Botón para actualizar lista
-        ttk.Button(frame_conductores, text="Actualizar Lista", 
-                  command=self.actualizar_lista_conductores).pack(pady=5)
-        
-        # Inicializar lista
-        self.actualizar_lista_conductores()
-    
-    def actualizar_lista_conductores(self):
+    def actualizar_pedidos_conductor(self):
+        """Actualiza la lista de pedidos del conductor logueado"""
         # Limpiar lista actual
-        for item in self.tree_conductores.get_children():
-            self.tree_conductores.delete(item)
+        for item in self.tree_pedidos_conductor.get_children():
+            self.tree_pedidos_conductor.delete(item)
         
-        # Cargar la lista de conductores desde el JSON
-        conductores = cargar_conductores()
+        if not self.conductor_actual:
+            return
         
-        # Verificar qué conductores están ocupados basado en pedidos en proceso
-        for pedido in PEDIDOS:
-            if pedido.estado == "en_proceso" and pedido.conductor:
-                for conductor in conductores:
-                    if conductor["nombre"] == pedido.conductor:
-                        conductor["estado"] = "ocupado"
-        # Guardar cambios de estado
-        guardar_conductores(conductores)
+        # Filtrar pedidos del conductor actual
+        pedidos_conductor = [p for p in PEDIDOS if p.conductor == self.conductor_actual["nombre"]]
         
-        # Agregar conductores a la lista
-        for conductor in conductores:
-            self.tree_conductores.insert("", "end", values=(
-                conductor["nombre"],
-                conductor["licencia"],
-                conductor["estado"]
+        for pedido in pedidos_conductor:
+            # Formatear items para mostrar
+            items_texto = []
+            for item in pedido.items:
+                items_texto.append(f"{item['cantidad']}x {item['nombre']}")
+            items_str = ", ".join(items_texto)
+            
+            self.tree_pedidos_conductor.insert("", "end", values=(
+                pedido.id,
+                pedido.usuario,
+                pedido.direccion_destino,
+                items_str,
+                pedido.estado
             ))
 
-    def agregar_conductor(self):
-        try:
-            if not all([self.nombre_conductor.get(), self.licencia_conductor.get()]):
-                messagebox.showerror("Error", "Por favor complete todos los campos")
-                return
-            nombre = self.nombre_conductor.get()
-            conductores = cargar_conductores()
-            if any(c["nombre"] == nombre for c in conductores):
-                messagebox.showerror("Error", "Ya existe un conductor con ese nombre")
-                return
-            nuevo_conductor = {
-                "nombre": nombre,
-                "licencia": self.licencia_conductor.get(),
-                "estado": self.estado_conductor.get()
-            }
-            conductores.append(nuevo_conductor)
-            guardar_conductores(conductores)
-            self.actualizar_combobox_conductores()
-            self.nombre_conductor.set("")
-            self.licencia_conductor.set("")
-            self.estado_conductor.set("disponible")
-            self.actualizar_lista_conductores()
-            messagebox.showinfo("Éxito", f"Conductor {nombre} agregado correctamente")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error al agregar conductor: {str(e)}")
+    def tomar_pedido_automatico(self):
+        if not self.conductor_actual:
+            messagebox.showerror("Error", "Debe iniciar sesión primero")
+            return
+        
+        # Buscar pedidos pendientes
+        pedidos_pendientes = [p for p in PEDIDOS if p.estado == "pendiente"]
+        
+        if not pedidos_pendientes:
+            messagebox.showinfo("Información", "No hay pedidos pendientes disponibles")
+            return
+        
+        # Tomar el primer pedido pendiente
+        pedido = pedidos_pendientes[0]
+        
+        # Asignar conductor al pedido
+        pedido.conductor = self.conductor_actual["nombre"]
+        pedido.estado = "en_proceso"
+        
+        # Cambiar estado del conductor a ocupado
+        conductores = cargar_conductores()
+        for c in conductores:
+            if c["nombre"] == self.conductor_actual["nombre"]:
+                c["estado"] = "ocupado"
+        guardar_conductores(conductores)
+        
+        # Guardar cambios
+        self.guardar_pedidos()
+        
+        # Actualizar listas
+        self.actualizar_lista_pedidos()
+        self.actualizar_pedidos_conductor()
+        
+        messagebox.showinfo("Éxito", f"Pedido #{pedido.id} asignado automáticamente")
+        
+        # Establecer dirección de destino en el mapa
+        self.destino_direccion.set(pedido.direccion_destino)
 
-    def actualizar_combobox_conductores(self):
-        if hasattr(self, 'combo_conductor_asignar'):
-            self.combo_conductor_asignar['values'] = [c["nombre"] for c in cargar_conductores()]
-
-    def asignar_conductor_pedido(self):
-        try:
-            pedido_id = self.pedido_asignar.get()
-            conductor_nombre = self.conductor_asignar.get()
-            if not pedido_id or not conductor_nombre:
-                messagebox.showerror("Error", "Por favor complete todos los campos")
-                return
-            pedido = next((p for p in PEDIDOS if p.id == int(pedido_id)), None)
-            if not pedido:
-                messagebox.showerror("Error", "Pedido no encontrado")
-                return
-            # Asignar conductor
-            pedido.conductor = conductor_nombre
-            pedido.estado = "en_proceso"
-            self.guardar_pedidos()
-            # Cambiar estado del conductor a ocupado y guardar
-            conductores = cargar_conductores()
-            for c in conductores:
-                if c["nombre"] == conductor_nombre:
-                    c["estado"] = "ocupado"
-            guardar_conductores(conductores)
-            self.actualizar_lista_pedidos()
-            self.actualizar_lista_conductores()
-            self.pedido_asignar.set("")
-            self.conductor_asignar.set("")
-            messagebox.showinfo("Éxito", f"Conductor {conductor_nombre} asignado al pedido #{pedido_id}")
-        except ValueError:
-            messagebox.showerror("Error", "El ID del pedido debe ser un número")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error al asignar conductor: {str(e)}")
-
-    def marcar_pedido_terminado(self):
-        seleccion = self.tree_pedidos.selection()
+    def marcar_pedido_terminado_conductor(self):
+        """Función específica para que el conductor marque su pedido como terminado"""
+        if not self.conductor_actual:
+            messagebox.showerror("Error", "Debe estar logueado")
+            return
+        
+        # Obtener pedido seleccionado
+        seleccion = self.tree_pedidos_conductor.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
             return
-        pedido_id = int(self.tree_pedidos.item(seleccion[0])["values"][0])
+        
+        # Obtener ID del pedido
+        pedido_id = int(self.tree_pedidos_conductor.item(seleccion[0])["values"][0])
+        
+        # Encontrar pedido
         pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
         if not pedido:
             messagebox.showerror("Error", "Pedido no encontrado")
             return
+        
+        # Verificar que el pedido pertenece al conductor logueado
+        if pedido.conductor != self.conductor_actual["nombre"]:
+            messagebox.showerror("Error", "Este pedido no le pertenece")
+            return
+        
+        # Verificar que el pedido esté en proceso
         if pedido.estado != "en_proceso":
             messagebox.showwarning("Advertencia", "Solo se pueden marcar como terminados los pedidos en proceso")
             return
+        
+        # Marcar pedido como terminado
         if pedido.completar_pedido():
             self.guardar_pedidos()
             # Cambiar estado del conductor a disponible y guardar
             conductores = cargar_conductores()
             for c in conductores:
-                if c["nombre"] == pedido.conductor:
+                if c["nombre"] == self.conductor_actual["nombre"]:
                     c["estado"] = "disponible"
             guardar_conductores(conductores)
+            
+            # Actualizar listas
             self.actualizar_lista_pedidos()
-            self.actualizar_lista_conductores()
+            self.actualizar_pedidos_conductor()
+            
             messagebox.showinfo("Éxito", f"Pedido #{pedido_id} marcado como terminado")
         else:
             messagebox.showerror("Error", "No se pudo marcar el pedido como terminado")
+
+    def marcar_pedido_terminado_general(self):
+        # Obtener pedido seleccionado
+        seleccion = self.tree_pedidos.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
+            return
+        
+        # Obtener ID del pedido
+        pedido_id = int(self.tree_pedidos.item(seleccion[0])["values"][0])
+        
+        # Encontrar pedido
+        pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
+        if not pedido:
+            messagebox.showerror("Error", "Pedido no encontrado")
+            return
+        
+        # Marcar pedido como terminado
+        if pedido.completar_pedido():
+            self.guardar_pedidos()
+            # Actualizar listas
+            self.actualizar_lista_pedidos()
+            self.actualizar_pedidos_conductor()
+            
+            messagebox.showinfo("Éxito", f"Pedido #{pedido_id} marcado como terminado")
+        else:
+            messagebox.showerror("Error", "No se pudo marcar el pedido como terminado")
+
+    def cargar_direccion_pedido(self):
+        """Carga la dirección del pedido seleccionado al panel de cálculos"""
+        # Obtener pedido seleccionado del conductor
+        seleccion = self.tree_pedidos_conductor.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
+            return
+        
+        try:
+            # Obtener ID del pedido
+            valores = self.tree_pedidos_conductor.item(seleccion[0])["values"]
+            pedido_id = int(valores[0])
+            
+            # Encontrar pedido
+            pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
+            if not pedido:
+                messagebox.showerror("Error", "Pedido no encontrado")
+                return
+            
+            # Establecer dirección del pedido en el panel de cálculos
+            self.destino_direccion.set(pedido.direccion_destino)
+            
+            # Cambiar a la pestaña de cálculos
+            self.notebook.select(0)  # Primera pestaña (Cálculos)
+            
+            messagebox.showinfo("Éxito", f"Dirección del pedido #{pedido_id} cargada en el panel de cálculos")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar dirección: {str(e)}")
 
 if __name__ == "__main__":
     root = tk.Tk()

@@ -15,6 +15,9 @@ import googlemaps
 import os
 from dotenv import load_dotenv
 
+# Cargar variables de entorno
+load_dotenv()
+
 class LoginInterface:
     def __init__(self, root):
         self.root = root
@@ -79,7 +82,7 @@ class LoginInterface:
         win.destroy()
         self.root.deiconify()
 
-
+    
 if __name__ == "__main__":
     root = tk.Tk()
     app = LoginInterface(root)
