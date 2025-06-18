@@ -88,5 +88,14 @@
         "stock": 120,
         "marca": "Sin marca",
         "marca_propia": false
+    },
+    {
+        "nombre": "Empanadas de Darin",
+        "categoria": "alimentos",
+        "precio": 30000.0,
+        "peso": 1.0,
+        "stock": 12,
+        "marca": "Darin",
+        "marca_propia": true
     }
 ]

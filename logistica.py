@@ -4,7 +4,7 @@ from tkintermapview import TkinterMapView
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 from datums.vehiculos import VEHICULOS_DISPONIBLES, Vehiculo
-from datums.conductor import CONDUCTOR_PREDETERMINADO
+from datums.conductor import CONDUCTOR_PREDETERMINADO, cargar_conductores, guardar_conductores
 from datums.ruta import PuntoRuta, Ruta
 from datums.pedido import PEDIDOS, Pedido
 import math
@@ -16,7 +16,7 @@ import json
 from datetime import datetime
 
 class CalculadoraLogistica:
-    def __init__(self, root):
+    def __init__(self, root, parent=None):
         self.peso_carga = tk.DoubleVar(value=500) # 500 kg
         self.vehiculo_seleccionado = tk.StringVar(value="Citroën Berlingo Furgón")
         
@@ -67,8 +67,10 @@ class CalculadoraLogistica:
         
         # Ventana Principal
         self.root = root
+        self.parent = parent
         self.root.title("Calculadora de Logística")
         self.root.geometry("1200x800")
+        self.root.protocol("WM_DELETE_WINDOW", self.cerrar_logistica)
         
         self.marco_principal = ttk.Frame(root)
         self.marco_principal.pack(fill="both", expand=True, padx=10, pady=10)
@@ -112,6 +114,10 @@ class CalculadoraLogistica:
         pestaña_pedidos = ttk.Frame(notebook)
         notebook.add(pestaña_pedidos, text="Pedidos")
         
+        # Pestaña de gestión de conductores
+        pestaña_conductores = ttk.Frame(notebook)
+        notebook.add(pestaña_conductores, text="Gestión de Conductores")
+        
         # Pestaña de cálculo
         pestaña_calculo = ttk.Frame(notebook)
         notebook.add(pestaña_calculo, text="Cálculo de Ruta")
@@ -122,26 +128,44 @@ class CalculadoraLogistica:
         
         # Crear paneles
         self.crear_panel_pedidos(pestaña_pedidos)
+        self.crear_panel_conductores(pestaña_conductores)
         self.crear_panel_calculo_ruta(pestaña_calculo)
         self.crear_panel_nuevo_vehiculo(pestaña_vehiculo)
         
     def crear_panel_pedidos(self, parent):
         # Frame para lista de pedidos
-        frame_pedidos = ttk.LabelFrame(parent, text="Pedidos Pendientes")
+        frame_pedidos = ttk.LabelFrame(parent, text="Gestión de Pedidos")
         frame_pedidos.pack(fill="both", expand=True, padx=5, pady=5)
         
+        # Frame para filtros
+        frame_filtros = ttk.Frame(frame_pedidos)
+        frame_filtros.pack(fill="x", pady=5)
+        
+        ttk.Label(frame_filtros, text="Filtrar por estado:").pack(side="left", padx=5)
+        self.filtro_estado = tk.StringVar(value="todos")
+        combo_filtro = ttk.Combobox(frame_filtros, textvariable=self.filtro_estado, 
+                                   values=["todos", "pendiente", "en_proceso", "completado"], 
+                                   state="readonly", width=15)
+        combo_filtro.pack(side="left", padx=5)
+        combo_filtro.bind("<<ComboboxSelected>>", lambda e: self.actualizar_lista_pedidos())
+        
         # Treeview para pedidos
-        self.tree_pedidos = ttk.Treeview(frame_pedidos, columns=("ID", "Usuario", "Dirección", "Items", "Estado"), show="headings")
+        self.tree_pedidos = ttk.Treeview(frame_pedidos, columns=("ID", "Usuario", "Dirección", "Items", "Estado", "Conductor"), show="headings")
         self.tree_pedidos.heading("ID", text="ID")
         self.tree_pedidos.heading("Usuario", text="Usuario")
         self.tree_pedidos.heading("Dirección", text="Dirección")
         self.tree_pedidos.heading("Items", text="Items")
         self.tree_pedidos.heading("Estado", text="Estado")
+        self.tree_pedidos.heading("Conductor", text="Conductor")
         self.tree_pedidos.pack(fill="both", expand=True, pady=5)
         
         # Botón para tomar pedido
         ttk.Button(frame_pedidos, text="Tomar Pedido Seleccionado", 
                   command=self.tomar_pedido).pack(pady=5)
+        
+        # Botón para marcar pedido como terminado
+        ttk.Button(frame_pedidos, text="Marcar Pedido como Terminado", 
+                  command=self.marcar_pedido_terminado).pack(pady=5)
         
         # Botón para actualizar lista
         ttk.Button(frame_pedidos, text="Actualizar Lista", 
@@ -155,22 +179,29 @@ class CalculadoraLogistica:
         # Limpiar lista actual
         for item in self.tree_pedidos.get_children():
             self.tree_pedidos.delete(item)
-        # Agregar pedidos pendientes
-        for pedido in PEDIDOS:
-            if pedido.estado == "pendiente":
-                # Formatear items para mostrar
-                items_texto = []
-                for item in pedido.items:
-                    items_texto.append(f"{item['cantidad']}x {item['nombre']}")
-                items_str = ", ".join(items_texto)
-                
-                self.tree_pedidos.insert("", "end", values=(
-                    pedido.id,
-                    pedido.usuario,
-                    pedido.direccion_destino,
-                    items_str,
-                    pedido.estado
-                ))
+        
+        # Filtrar pedidos según el filtro de estado
+        pedidos_filtrados = [p for p in PEDIDOS if self.filtro_estado.get() == "todos" or p.estado == self.filtro_estado.get()]
+        
+        # Agregar todos los pedidos filtrados
+        for pedido in pedidos_filtrados:
+            # Formatear items para mostrar
+            items_texto = []
+            for item in pedido.items:
+                items_texto.append(f"{item['cantidad']}x {item['nombre']}")
+            items_str = ", ".join(items_texto)
+            
+            # Mostrar conductor si está asignado
+            conductor_str = pedido.conductor if pedido.conductor else "Sin asignar"
+            
+            self.tree_pedidos.insert("", "end", values=(
+                pedido.id,
+                pedido.usuario,
+                pedido.direccion_destino,
+                items_str,
+                pedido.estado,
+                conductor_str
+            ))
     
     def tomar_pedido(self):
         # Obtener pedido seleccionado
@@ -193,6 +224,7 @@ class CalculadoraLogistica:
             self.guardar_pedidos()
             messagebox.showinfo("Éxito", f"Pedido #{pedido_id} tomado exitosamente")
             self.actualizar_lista_pedidos()
+            self.actualizar_lista_conductores()  # Actualizar estado de conductores
             
             # Establecer dirección de destino en el mapa
             self.destino_direccion.set(pedido.direccion_destino)
@@ -572,6 +604,190 @@ class CalculadoraLogistica:
         else:
             # Archivo no existe, inicializar lista vacía
             PEDIDOS.clear()
+
+    def cerrar_logistica(self):
+        self.root.destroy()
+        if self.parent:
+            self.parent.deiconify()
+
+    def crear_panel_conductores(self, parent):
+        # Frame para lista de conductores
+        frame_conductores = ttk.LabelFrame(parent, text="Conductores Disponibles")
+        frame_conductores.pack(fill="x", padx=5, pady=5)
+        
+        # Treeview para conductores
+        self.tree_conductores = ttk.Treeview(frame_conductores, 
+                                           columns=("nombre", "licencia", "estado"), 
+                                           show="headings", height=6)
+        self.tree_conductores.heading("nombre", text="Nombre")
+        self.tree_conductores.heading("licencia", text="Licencia")
+        self.tree_conductores.heading("estado", text="Estado")
+        self.tree_conductores.pack(fill="x", pady=5)
+        
+        # Frame para agregar conductor
+        frame_agregar = ttk.LabelFrame(parent, text="Agregar Conductor")
+        frame_agregar.pack(fill="x", padx=5, pady=5)
+        
+        # Variables para formulario
+        self.nombre_conductor = tk.StringVar()
+        self.licencia_conductor = tk.StringVar()
+        self.estado_conductor = tk.StringVar(value="disponible")
+        
+        # Campos del formulario
+        ttk.Label(frame_agregar, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_agregar, textvariable=self.nombre_conductor, width=30).grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_agregar, text="Licencia:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_agregar, textvariable=self.licencia_conductor, width=20).grid(row=0, column=3, padx=5, pady=5)
+        
+        ttk.Label(frame_agregar, text="Estado:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        ttk.Combobox(frame_agregar, textvariable=self.estado_conductor, 
+                    values=["disponible", "ocupado", "descanso"]).grid(row=1, column=1, padx=5, pady=5)
+        
+        # Botones
+        ttk.Button(frame_agregar, text="Agregar Conductor", 
+                  command=self.agregar_conductor).grid(row=1, column=2, columnspan=2, padx=5, pady=5)
+        
+        # Frame para asignar conductor a pedido
+        frame_asignar = ttk.LabelFrame(parent, text="Asignar Conductor a Pedido")
+        frame_asignar.pack(fill="x", padx=5, pady=5)
+        
+        # Variables para asignación
+        self.pedido_asignar = tk.StringVar()
+        self.conductor_asignar = tk.StringVar()
+        
+        # Campos para asignación
+        ttk.Label(frame_asignar, text="Pedido ID:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(frame_asignar, textvariable=self.pedido_asignar, width=10).grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        
+        ttk.Label(frame_asignar, text="Conductor:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.combo_conductor_asignar = ttk.Combobox(frame_asignar, textvariable=self.conductor_asignar, 
+                    values=[c["nombre"] for c in cargar_conductores()])
+        self.combo_conductor_asignar.grid(row=0, column=3, padx=5, pady=5)
+        
+        # Botón para asignar
+        ttk.Button(frame_asignar, text="Asignar Conductor", 
+                  command=self.asignar_conductor_pedido).grid(row=1, column=0, columnspan=4, padx=5, pady=5)
+        
+        # Botón para actualizar lista
+        ttk.Button(frame_conductores, text="Actualizar Lista", 
+                  command=self.actualizar_lista_conductores).pack(pady=5)
+        
+        # Inicializar lista
+        self.actualizar_lista_conductores()
+    
+    def actualizar_lista_conductores(self):
+        # Limpiar lista actual
+        for item in self.tree_conductores.get_children():
+            self.tree_conductores.delete(item)
+        
+        # Cargar la lista de conductores desde el JSON
+        conductores = cargar_conductores()
+        
+        # Verificar qué conductores están ocupados basado en pedidos en proceso
+        for pedido in PEDIDOS:
+            if pedido.estado == "en_proceso" and pedido.conductor:
+                for conductor in conductores:
+                    if conductor["nombre"] == pedido.conductor:
+                        conductor["estado"] = "ocupado"
+        # Guardar cambios de estado
+        guardar_conductores(conductores)
+        
+        # Agregar conductores a la lista
+        for conductor in conductores:
+            self.tree_conductores.insert("", "end", values=(
+                conductor["nombre"],
+                conductor["licencia"],
+                conductor["estado"]
+            ))
+
+    def agregar_conductor(self):
+        try:
+            if not all([self.nombre_conductor.get(), self.licencia_conductor.get()]):
+                messagebox.showerror("Error", "Por favor complete todos los campos")
+                return
+            nombre = self.nombre_conductor.get()
+            conductores = cargar_conductores()
+            if any(c["nombre"] == nombre for c in conductores):
+                messagebox.showerror("Error", "Ya existe un conductor con ese nombre")
+                return
+            nuevo_conductor = {
+                "nombre": nombre,
+                "licencia": self.licencia_conductor.get(),
+                "estado": self.estado_conductor.get()
+            }
+            conductores.append(nuevo_conductor)
+            guardar_conductores(conductores)
+            self.actualizar_combobox_conductores()
+            self.nombre_conductor.set("")
+            self.licencia_conductor.set("")
+            self.estado_conductor.set("disponible")
+            self.actualizar_lista_conductores()
+            messagebox.showinfo("Éxito", f"Conductor {nombre} agregado correctamente")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al agregar conductor: {str(e)}")
+
+    def actualizar_combobox_conductores(self):
+        if hasattr(self, 'combo_conductor_asignar'):
+            self.combo_conductor_asignar['values'] = [c["nombre"] for c in cargar_conductores()]
+
+    def asignar_conductor_pedido(self):
+        try:
+            pedido_id = self.pedido_asignar.get()
+            conductor_nombre = self.conductor_asignar.get()
+            if not pedido_id or not conductor_nombre:
+                messagebox.showerror("Error", "Por favor complete todos los campos")
+                return
+            pedido = next((p for p in PEDIDOS if p.id == int(pedido_id)), None)
+            if not pedido:
+                messagebox.showerror("Error", "Pedido no encontrado")
+                return
+            # Asignar conductor
+            pedido.conductor = conductor_nombre
+            pedido.estado = "en_proceso"
+            self.guardar_pedidos()
+            # Cambiar estado del conductor a ocupado y guardar
+            conductores = cargar_conductores()
+            for c in conductores:
+                if c["nombre"] == conductor_nombre:
+                    c["estado"] = "ocupado"
+            guardar_conductores(conductores)
+            self.actualizar_lista_pedidos()
+            self.actualizar_lista_conductores()
+            self.pedido_asignar.set("")
+            self.conductor_asignar.set("")
+            messagebox.showinfo("Éxito", f"Conductor {conductor_nombre} asignado al pedido #{pedido_id}")
+        except ValueError:
+            messagebox.showerror("Error", "El ID del pedido debe ser un número")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al asignar conductor: {str(e)}")
+
+    def marcar_pedido_terminado(self):
+        seleccion = self.tree_pedidos.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
+            return
+        pedido_id = int(self.tree_pedidos.item(seleccion[0])["values"][0])
+        pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
+        if not pedido:
+            messagebox.showerror("Error", "Pedido no encontrado")
+            return
+        if pedido.estado != "en_proceso":
+            messagebox.showwarning("Advertencia", "Solo se pueden marcar como terminados los pedidos en proceso")
+            return
+        if pedido.completar_pedido():
+            self.guardar_pedidos()
+            # Cambiar estado del conductor a disponible y guardar
+            conductores = cargar_conductores()
+            for c in conductores:
+                if c["nombre"] == pedido.conductor:
+                    c["estado"] = "disponible"
+            guardar_conductores(conductores)
+            self.actualizar_lista_pedidos()
+            self.actualizar_lista_conductores()
+            messagebox.showinfo("Éxito", f"Pedido #{pedido_id} marcado como terminado")
+        else:
+            messagebox.showerror("Error", "No se pudo marcar el pedido como terminado")
 
 if __name__ == "__main__":
     root = tk.Tk()

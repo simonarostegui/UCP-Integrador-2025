@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
+import os
+import json
 
 @dataclass
 class Conductor:
@@ -26,3 +28,18 @@ CONDUCTOR_PREDETERMINADO = Conductor(
     salario_base=150000,  # $150,000 por mes
     viaticos_diarios=5000  # $5,000 por día
 )
+
+CONDUCTORES_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'conductores.json')
+
+def cargar_conductores():
+    if not os.path.exists(CONDUCTORES_FILE):
+        return []
+    try:
+        with open(CONDUCTORES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def guardar_conductores(conductores):
+    with open(CONDUCTORES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(conductores, f, ensure_ascii=False, indent=4)

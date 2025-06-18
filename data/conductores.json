@@ -1,0 +1,22 @@
+[
+    {
+        "nombre": "Juan Pérez",
+        "licencia": "B1",
+        "estado": "disponible"
+    },
+    {
+        "nombre": "María García",
+        "licencia": "B2",
+        "estado": "disponible"
+    },
+    {
+        "nombre": "Carlos López",
+        "licencia": "B1",
+        "estado": "disponible"
+    },
+    {
+        "nombre": "Jorge Luis",
+        "licencia": "B3",
+        "estado": "ocupado"
+    }
+]

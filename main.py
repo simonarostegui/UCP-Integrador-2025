@@ -58,31 +58,26 @@ class LoginInterface:
         self.root.geometry(f'{width}x{height}+{x}+{y}')
     
     def acceso_usuario(self):
-        # Cerrar la ventana actual
-        self.root.destroy()
-        
-        # Crear nueva ventana para la interfaz de usuario
-        root = tk.Tk()
-        app = InterfazUsuario(root)
-        root.mainloop()
+        self.root.withdraw()
+        win = tk.Toplevel(self.root)
+        app = InterfazUsuario(win, parent=self.root)
+        win.protocol("WM_DELETE_WINDOW", lambda: self.cerrar_ventana_secundaria(win))
     
     def acceso_conductor(self):
-        # Cerrar la ventana actual
-        self.root.destroy()
-        
-        # Crear nueva ventana para la calculadora
-        root = tk.Tk()
-        app = CalculadoraLogistica(root)
-        root.mainloop()
+        self.root.withdraw()
+        win = tk.Toplevel(self.root)
+        app = CalculadoraLogistica(win, parent=self.root)
+        win.protocol("WM_DELETE_WINDOW", lambda: self.cerrar_ventana_secundaria(win))
     
     def acceso_admin(self):
-        # Cerrar la ventana actual
-        self.root.destroy()
-        
-        # Crear nueva ventana para la interfaz de administrador
-        root = tk.Tk()
-        app = InterfazAdmin(root)
-        root.mainloop()
+        self.root.withdraw()
+        win = tk.Toplevel(self.root)
+        app = InterfazAdmin(win, parent=self.root)
+        win.protocol("WM_DELETE_WINDOW", lambda: self.cerrar_ventana_secundaria(win))
+
+    def cerrar_ventana_secundaria(self, win):
+        win.destroy()
+        self.root.deiconify()
 
 
 if __name__ == "__main__":

@@ -5,16 +5,19 @@ import os
 from datetime import datetime, timedelta
 from datums.pedido import PEDIDOS, Pedido
 from datums.vehiculos import VEHICULOS_DISPONIBLES, Vehiculo
-from datums.conductor import CONDUCTOR_PREDETERMINADO
+from datums.conductor import CONDUCTOR_PREDETERMINADO, cargar_conductores
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
+import sys
 
 class InterfazAdmin:
-    def __init__(self, root):
+    def __init__(self, root, parent=None):
         self.root = root
+        self.parent = parent
         self.root.title("Panel de Administración")
         self.root.geometry("1400x900")
+        self.root.protocol("WM_DELETE_WINDOW", self.cerrar_admin)
         
         # Variables de datos
         self.data_dir = "data"
@@ -51,6 +54,33 @@ class InterfazAdmin:
                 self.productos = []
         else:
             self.productos = []
+        
+        # Cargar pedidos
+        if os.path.exists(self.pedidos_file):
+            try:
+                with open(self.pedidos_file, 'r', encoding='utf-8') as f:
+                    contenido = f.read().strip()
+                    if contenido:
+                        pedidos_data = json.loads(contenido)
+                        PEDIDOS.clear()  # Limpiar lista actual
+                        for pedido_dict in pedidos_data:
+                            pedido = Pedido(
+                                id=pedido_dict["id"],
+                                usuario=pedido_dict["usuario"],
+                                items=pedido_dict["items"],
+                                direccion_destino=pedido_dict["direccion_destino"]
+                            )
+                            pedido.estado = pedido_dict["estado"]
+                            pedido.conductor = pedido_dict["conductor"]
+                            if pedido_dict["fecha_creacion"]:
+                                pedido.fecha_creacion = datetime.fromisoformat(pedido_dict["fecha_creacion"])
+                            PEDIDOS.append(pedido)
+                    else:
+                        PEDIDOS.clear()
+            except (json.JSONDecodeError, FileNotFoundError):
+                PEDIDOS.clear()
+        else:
+            PEDIDOS.clear()
         
         # Cargar multas
         if os.path.exists(self.multas_file):
@@ -95,19 +125,27 @@ class InterfazAdmin:
     
     def crear_interfaz(self):
         # Frame principal
-        self.marco_principal = ttk.Frame(self.root)
-        self.marco_principal.pack(fill="both", expand=True, padx=10, pady=10)
+        self.frame_principal = ttk.Frame(self.root)
+        self.frame_principal.pack(fill="both", expand=True, padx=10, pady=10)
         
         # Notebook para pestañas
-        self.notebook = ttk.Notebook(self.marco_principal)
+        self.notebook = ttk.Notebook(self.frame_principal)
         self.notebook.pack(fill="both", expand=True)
         
         # Crear pestañas
         self.crear_pestaña_productos()
         self.crear_pestaña_estadisticas()
+        self.crear_pestaña_pedidos()
         self.crear_pestaña_vehiculos()
         self.crear_pestaña_multas()
         self.crear_pestaña_reportes()
+        
+        # Configurar evento para actualizar combobox de responsables cuando se seleccione la pestaña de multas
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
+        
+        # Botón para cerrar
+        ttk.Button(self.frame_principal, text="Cerrar", 
+                  command=self.cerrar_admin).pack(pady=10)
     
     def crear_pestaña_productos(self):
         # Pestaña de productos
@@ -187,7 +225,7 @@ class InterfazAdmin:
     def crear_pestaña_estadisticas(self):
         # Pestaña de estadísticas
         self.pestaña_estadisticas = ttk.Frame(self.notebook)
-        self.notebook.add(self.pestaña_estadisticas, text="Estadísticas de Ventas")
+        self.notebook.add(self.pestaña_estadisticas, text="Estadísticas")
         
         # Frame para filtros
         frame_filtros = ttk.LabelFrame(self.pestaña_estadisticas, text="Filtros")
@@ -213,8 +251,67 @@ class InterfazAdmin:
         frame_detalle = ttk.LabelFrame(self.pestaña_estadisticas, text="Detalle")
         frame_detalle.pack(fill="x", padx=5, pady=5)
         
-        self.texto_estadisticas = tk.Text(frame_detalle, height=8)
+        self.texto_estadisticas = tk.Text(frame_detalle, height=12)
         self.texto_estadisticas.pack(fill="x", padx=5, pady=5)
+    
+    def crear_pestaña_pedidos(self):
+        # Pestaña de pedidos
+        self.pestaña_pedidos = ttk.Frame(self.notebook)
+        self.notebook.add(self.pestaña_pedidos, text="Gestión de Pedidos")
+        
+        # Frame para pedidos en espera
+        frame_espera = ttk.LabelFrame(self.pestaña_pedidos, text="Pedidos en Espera")
+        frame_espera.pack(fill="x", padx=5, pady=5)
+        
+        # Treeview para pedidos en espera
+        self.tree_pedidos_espera = ttk.Treeview(frame_espera, 
+                                               columns=("id", "usuario", "items", "direccion", "fecha"), 
+                                               show="headings", height=6)
+        self.tree_pedidos_espera.heading("id", text="ID")
+        self.tree_pedidos_espera.heading("usuario", text="Usuario")
+        self.tree_pedidos_espera.heading("items", text="Items")
+        self.tree_pedidos_espera.heading("direccion", text="Dirección")
+        self.tree_pedidos_espera.heading("fecha", text="Fecha")
+        self.tree_pedidos_espera.pack(fill="x", padx=5, pady=5)
+        
+        # Frame para pedidos en curso
+        frame_curso = ttk.LabelFrame(self.pestaña_pedidos, text="Pedidos en Curso")
+        frame_curso.pack(fill="x", padx=5, pady=5)
+        
+        # Treeview para pedidos en curso
+        self.tree_pedidos_curso = ttk.Treeview(frame_curso, 
+                                              columns=("id", "usuario", "items", "direccion", "conductor", "fecha"), 
+                                              show="headings", height=6)
+        self.tree_pedidos_curso.heading("id", text="ID")
+        self.tree_pedidos_curso.heading("usuario", text="Usuario")
+        self.tree_pedidos_curso.heading("items", text="Items")
+        self.tree_pedidos_curso.heading("direccion", text="Dirección")
+        self.tree_pedidos_curso.heading("conductor", text="Conductor")
+        self.tree_pedidos_curso.heading("fecha", text="Fecha")
+        self.tree_pedidos_curso.pack(fill="x", padx=5, pady=5)
+        
+        # Frame para pedidos completados
+        frame_completado = ttk.LabelFrame(self.pestaña_pedidos, text="Pedidos Completados")
+        frame_completado.pack(fill="x", padx=5, pady=5)
+        
+        # Treeview para pedidos completados
+        self.tree_pedidos_completado = ttk.Treeview(frame_completado, 
+                                                   columns=("id", "usuario", "items", "direccion", "conductor", "fecha"), 
+                                                   show="headings", height=6)
+        self.tree_pedidos_completado.heading("id", text="ID")
+        self.tree_pedidos_completado.heading("usuario", text="Usuario")
+        self.tree_pedidos_completado.heading("items", text="Items")
+        self.tree_pedidos_completado.heading("direccion", text="Dirección")
+        self.tree_pedidos_completado.heading("conductor", text="Conductor")
+        self.tree_pedidos_completado.heading("fecha", text="Fecha")
+        self.tree_pedidos_completado.pack(fill="x", padx=5, pady=5)
+        
+        # Botón para actualizar todas las listas
+        ttk.Button(self.pestaña_pedidos, text="Actualizar Listas de Pedidos", 
+                  command=self.actualizar_listas_pedidos).pack(pady=10)
+        
+        # Inicializar listas
+        self.actualizar_listas_pedidos()
     
     def crear_pestaña_vehiculos(self):
         # Pestaña de vehículos
@@ -310,7 +407,10 @@ class InterfazAdmin:
         ttk.Entry(frame_agregar, textvariable=self.descripcion_multa, width=40).grid(row=1, column=1, columnspan=3, padx=5, pady=5, sticky="ew")
         
         ttk.Label(frame_agregar, text="Responsable:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        ttk.Entry(frame_agregar, textvariable=self.responsable_multa, width=20).grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.combo_responsable_multa = ttk.Combobox(frame_agregar, textvariable=self.responsable_multa, 
+                    values=[c["nombre"] for c in cargar_conductores()], 
+                    state="readonly")
+        self.combo_responsable_multa.grid(row=2, column=1, padx=5, pady=5, sticky="w")
         
         ttk.Label(frame_agregar, text="Vehículo:").grid(row=2, column=2, padx=5, pady=5, sticky="w")
         ttk.Combobox(frame_agregar, textvariable=self.vehiculo_multa, 
@@ -505,6 +605,9 @@ class InterfazAdmin:
     # Métodos para estadísticas
     def generar_estadisticas(self):
         try:
+            # Recargar pedidos para asegurar datos actualizados
+            self.cargar_pedidos_recientes()
+            
             # Analizar pedidos para obtener estadísticas
             productos_vendidos = {}
             
@@ -542,7 +645,7 @@ class InterfazAdmin:
                 
                 if categorias:
                     self.ax2.pie(categorias.values(), labels=categorias.keys(), autopct='%1.1f%%')
-                    self.ax2.set_title("Distribución por Categorías")
+                    self.ax2.set_title("Distribución de nuestros productos por Categorías")
                 
                 self.canvas.draw()
                 
@@ -561,12 +664,41 @@ class InterfazAdmin:
                 
                 total_ventas = sum(productos_vendidos.values())
                 self.texto_estadisticas.insert(tk.END, f"\nTOTAL DE UNIDADES VENDIDAS: {total_ventas}\n")
+                self.texto_estadisticas.insert(tk.END, f"TOTAL DE PEDIDOS: {len(PEDIDOS)}\n")
                 
             else:
                 messagebox.showinfo("Información", "No hay datos de ventas para mostrar")
                 
         except Exception as e:
             messagebox.showerror("Error", f"Error al generar estadísticas: {str(e)}")
+    
+    def cargar_pedidos_recientes(self):
+        """Función para recargar solo los pedidos desde el archivo"""
+        if os.path.exists(self.pedidos_file):
+            try:
+                with open(self.pedidos_file, 'r', encoding='utf-8') as f:
+                    contenido = f.read().strip()
+                    if contenido:
+                        pedidos_data = json.loads(contenido)
+                        PEDIDOS.clear()  # Limpiar lista actual
+                        for pedido_dict in pedidos_data:
+                            pedido = Pedido(
+                                id=pedido_dict["id"],
+                                usuario=pedido_dict["usuario"],
+                                items=pedido_dict["items"],
+                                direccion_destino=pedido_dict["direccion_destino"]
+                            )
+                            pedido.estado = pedido_dict["estado"]
+                            pedido.conductor = pedido_dict["conductor"]
+                            if pedido_dict["fecha_creacion"]:
+                                pedido.fecha_creacion = datetime.fromisoformat(pedido_dict["fecha_creacion"])
+                            PEDIDOS.append(pedido)
+                    else:
+                        PEDIDOS.clear()
+            except (json.JSONDecodeError, FileNotFoundError):
+                PEDIDOS.clear()
+        else:
+            PEDIDOS.clear()
     
     # Métodos para gestión de vehículos
     def agregar_vehiculo(self):
@@ -748,6 +880,68 @@ class InterfazAdmin:
         self.texto_reporte.insert(tk.END, f"• Vehículos registrados: {len(VEHICULOS_DISPONIBLES)}\n")
         self.texto_reporte.insert(tk.END, f"• Multas en período: {len(multas_periodo)}\n")
         self.texto_reporte.insert(tk.END, f"• Total multas: ${total_multas if multas_periodo else 0:,.2f}\n")
+
+    def actualizar_listas_pedidos(self):
+        """Función para actualizar todas las listas de pedidos según su estado"""
+        # Recargar pedidos para asegurar datos actualizados
+        self.cargar_pedidos_recientes()
+        
+        # Limpiar todas las listas
+        for tree in [self.tree_pedidos_espera, self.tree_pedidos_curso, self.tree_pedidos_completado]:
+            for item in tree.get_children():
+                tree.delete(item)
+        
+        # Clasificar pedidos por estado
+        for pedido in PEDIDOS:
+            # Formatear items para mostrar
+            items_texto = []
+            for item in pedido.items:
+                items_texto.append(f"{item['cantidad']}x {item['nombre']}")
+            items_str = ", ".join(items_texto)
+            
+            # Formatear fecha
+            fecha_str = pedido.fecha_creacion.strftime("%d/%m/%Y %H:%M") if pedido.fecha_creacion else "N/A"
+            
+            # Agregar a la lista correspondiente según el estado
+            if pedido.estado == "pendiente":
+                self.tree_pedidos_espera.insert("", "end", values=(
+                    pedido.id,
+                    pedido.usuario,
+                    items_str,
+                    pedido.direccion_destino,
+                    fecha_str
+                ))
+            elif pedido.estado == "en_proceso":
+                self.tree_pedidos_curso.insert("", "end", values=(
+                    pedido.id,
+                    pedido.usuario,
+                    items_str,
+                    pedido.direccion_destino,
+                    pedido.conductor or "Sin asignar",
+                    fecha_str
+                ))
+            elif pedido.estado == "completado":
+                self.tree_pedidos_completado.insert("", "end", values=(
+                    pedido.id,
+                    pedido.usuario,
+                    items_str,
+                    pedido.direccion_destino,
+                    pedido.conductor or "Sin asignar",
+                    fecha_str
+                ))
+    
+    def cerrar_admin(self):
+        self.root.destroy()
+        if self.parent:
+            self.parent.deiconify()
+
+    def actualizar_combobox_responsables(self):
+        if hasattr(self, 'combo_responsable_multa'):
+            self.combo_responsable_multa['values'] = [c["nombre"] for c in cargar_conductores()]
+
+    def on_tab_changed(self, event):
+        if self.notebook.index(self.notebook.select()) == 4:  # Verifica si se ha cambiado a la pestaña de multas
+            self.actualizar_combobox_responsables()
 
 if __name__ == "__main__":
     root = tk.Tk()

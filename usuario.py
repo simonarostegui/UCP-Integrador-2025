@@ -7,28 +7,32 @@ from dotenv import load_dotenv
 from datums.pedido import Pedido, PEDIDOS
 
 class InterfazUsuario:
-    def __init__(self, root):
+    def __init__(self, root, parent=None):
         self.root = root
+        self.parent = parent
         self.root.title("Sistema de Pedidos - Usuario")
-        self.root.geometry("800x600")
+        self.root.geometry("1200x800")
+        self.root.protocol("WM_DELETE_WINDOW", self.cerrar_usuario)
         
-        # Inicializar almacenamiento local
+        # Variables de datos
         self.data_dir = "data"
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
-        
         self.productos_file = os.path.join(self.data_dir, "productos.json")
         self.pedidos_file = os.path.join(self.data_dir, "pedidos.json")
         
-        # Variables
+        # Variables del carrito
         self.carrito = []
-        self.total_carrito = tk.DoubleVar(value=0.0)
+        self.total_carrito = tk.StringVar(value="$0")
         
         # Cargar datos
         self.cargar_datos_local()
         
         # Crear interfaz
         self.crear_interfaz()
+    
+    def cerrar_usuario(self):
+        self.root.destroy()
+        if self.parent:
+            self.parent.deiconify()
     
     def cargar_datos_local(self):
         # Cargar o inicializar productos
