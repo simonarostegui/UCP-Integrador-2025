@@ -96,16 +96,6 @@ class InterfazAdmin:
             width=15
         ).pack(pady=5)
         
-        # Información de credenciales
-        frame_info = ttk.LabelFrame(frame_principal, text="Credenciales por Defecto")
-        frame_info.pack(fill="x", pady=10)
-        
-        info_text = "Usuario: admin\n"
-        info_text += "Contraseña: admin123"
-        
-        ttk.Label(frame_info, text=info_text, font=("Arial", 8), 
-                 justify="left").pack(padx=10, pady=5)
-        
         # Instrucciones
         ttk.Label(frame_principal, text="Presiona Enter en cualquier campo para iniciar sesión", 
                  font=("Arial", 9), foreground="gray").pack(pady=5)
