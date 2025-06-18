@@ -6,7 +6,7 @@ from datetime import datetime
 class Pedido:
     id: int
     usuario: str
-    items: List[Dict]  # Lista de items en el carrito
+    items: List[Dict]  # lista de items en el carrito
     direccion_destino: str
     estado: str = "pendiente"  # pendiente, en_proceso, completado
     conductor: str = None
@@ -32,5 +32,5 @@ class Pedido:
             return True
         return False
 
-# Lista global para almacenar todos los pedidos
+# lista global para almacenar todos los pedidos
 PEDIDOS = [] 

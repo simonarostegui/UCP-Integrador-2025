@@ -15,7 +15,7 @@ import googlemaps
 import os
 from dotenv import load_dotenv
 
-# Cargar variables de entorno
+# cargar variables de entorno
 load_dotenv()
 
 class LoginInterface:
@@ -24,19 +24,19 @@ class LoginInterface:
         self.root.title("Sistema de Logística")
         self.root.geometry("400x300")
         
-        # Centrar la ventana
+        # centrar la ventana
         self.centrar_ventana()
         
-        # Crear el marco principal
+        # crear el marco principal
         self.marco_principal = ttk.Frame(root)
         self.marco_principal.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Título
+        # título
         ttk.Label(self.marco_principal, 
                  text="Sistema de Logística", 
                  font=("Helvetica", 16, "bold")).pack(pady=20)
         
-        # Botones
+        # botones para acceder a cada cosa
         ttk.Button(self.marco_principal, 
                   text="Acceso Usuario",
                   command=self.acceso_usuario,

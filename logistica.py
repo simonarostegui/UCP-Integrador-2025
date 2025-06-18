@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 import json
 from datetime import datetime, timedelta
 
-# Cargar variables de entorno
+# cargamos las variables de entorno porque si no no anda nada
 load_dotenv()
 
 class CalculadoraLogistica:
@@ -24,22 +24,22 @@ class CalculadoraLogistica:
         self.parent = parent
         self.conductor_actual = None
         
-        # Configurar ventana
+        # configuramos la ventana, medio grande para que entre todo
         self.root.title("Sistema de Logística - Login")
-        self.root.geometry("600x400")  # Tamaño aumentado para mostrar todos los elementos
+        self.root.geometry("600x400")  # tamaño aumentado para mostrar todos los elementos
         self.root.resizable(False, False)
         
-        # Centrar ventana
+        # centramos la ventana 
         self.centrar_ventana()
         
-        # Crear interfaz de login
+        # creamos la interfaz de login
         self.crear_interfaz_login()
         
-        # Inicializar geocoder para direcciones
+        # inicializamos el geocoder para las direcciones
         self.geocoder = Nominatim(user_agent="logistica_app")
     
     def centrar_ventana(self):
-        """Centra la ventana en la pantalla"""
+        ### centra la ventana en la pantalla
         self.root.update_idletasks()
         width = self.root.winfo_width()
         height = self.root.winfo_height()
@@ -48,27 +48,27 @@ class CalculadoraLogistica:
         self.root.geometry(f"{width}x{height}+{x}+{y}")
     
     def crear_interfaz_login(self):
-        """Crea la interfaz de login"""
-        # Frame principal
+        ### crea la interfaz de login
+        # frame principal para meter todo
         frame_principal = ttk.Frame(self.root)
         frame_principal.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Título
+        # título de la ventana
         ttk.Label(frame_principal, text="SISTEMA DE LOGÍSTICA", 
                  font=("Arial", 16, "bold")).pack(pady=20)
         
         ttk.Label(frame_principal, text="Login de Conductor", 
                  font=("Arial", 12)).pack(pady=10)
         
-        # Frame para formulario
+        # frame para el formulario
         frame_formulario = ttk.LabelFrame(frame_principal, text="Credenciales")
         frame_formulario.pack(fill="x", pady=20)
         
-        # Variables para login
+        # variables para el login
         self.usuario_conductor = tk.StringVar()
         self.password_conductor = tk.StringVar()
         
-        # Campos del formulario
+        # campos del formulario, lo básico
         ttk.Label(frame_formulario, text="Usuario:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
         entry_usuario = ttk.Entry(frame_formulario, textvariable=self.usuario_conductor, width=25)
         entry_usuario.grid(row=0, column=1, padx=10, pady=10)
@@ -77,23 +77,23 @@ class CalculadoraLogistica:
         entry_password = ttk.Entry(frame_formulario, textvariable=self.password_conductor, show="*", width=25)
         entry_password.grid(row=1, column=1, padx=10, pady=10)
         
-        # Configurar Enter para hacer login
+        # apretar enter hace login, más rápido
         entry_usuario.bind('<Return>', lambda e: self.login_conductor())
         entry_password.bind('<Return>', lambda e: self.login_conductor())
         
-        # Botones
+        # botones para loguear o cancelar
         frame_botones = ttk.Frame(frame_principal)
         frame_botones.pack(pady=20)
         
-        # Botón principal de login (ahora con ttk y fuente grande)
+        # botón principal de login
         btn_login = ttk.Button(
             frame_botones,
             text="INICIAR SESIÓN",
             command=self.login_conductor
         )
-        btn_login.pack(pady=10, ipadx=20, ipady=10)  # Más grande y visible
+        btn_login.pack(pady=10, ipadx=20, ipady=10)  # más grande y visible
         
-        # Botón cancelar
+        # botón cancelar por si te arrepentís
         ttk.Button(
             frame_botones,
             text="Cancelar",
@@ -101,15 +101,15 @@ class CalculadoraLogistica:
             width=15
         ).pack(pady=5)
         
-        # Instrucciones
+        # instrucciones por las dudas
         ttk.Label(frame_principal, text="Presiona Enter en cualquier campo para iniciar sesión", 
                  font=("Arial", 9), foreground="gray").pack(pady=5)
         
-        # Enfocar en el campo de usuario
+        # dejamos el foco en el usuario para que sea más rápido
         entry_usuario.focus()
     
     def login_conductor(self):
-        """Función de login"""
+        ### función de login
         usuario = self.usuario_conductor.get()
         password = self.password_conductor.get()
         
@@ -117,7 +117,7 @@ class CalculadoraLogistica:
             messagebox.showerror("Error", "Por favor complete usuario y contraseña")
             return
         
-        # Buscar conductor en la lista
+        # buscamos el conductor en la lista
         conductores = cargar_conductores()
         conductor = next((c for c in conductores if c.get("usuario") == usuario), None)
         
@@ -125,56 +125,56 @@ class CalculadoraLogistica:
             messagebox.showerror("Error", "Usuario no encontrado")
             return
         
-        # Verificar contraseña
+        # verificamos la contraseña
         if password != conductor.get("password"):
             messagebox.showerror("Error", "Contraseña incorrecta")
             return
         
-        # Login exitoso - permitir acceso aunque tenga pedido asignado
+        # login exitoso
         self.conductor_actual = conductor
         
-        # Mostrar mensaje de bienvenida
+        # mensaje de bienvenida, con advertencia si está ocupado
         if conductor["estado"] == "ocupado":
             messagebox.showinfo("Bienvenido", 
                 f"Bienvenido, {conductor['nombre']}\n\nNota: Tienes un pedido asignado actualmente.")
         else:
             messagebox.showinfo("Bienvenido", f"Bienvenido, {conductor['nombre']}")
         
-        # Inicializar la interfaz completa de logística
+        # inicializamos la interfaz completa de logística
         self.inicializar_interfaz_logistica()
     
     def cancelar_login(self):
-        """Cancela el login y cierra la ventana"""
+        ### cancela el login y cierra la ventana
         self.cerrar_logistica()
     
     def inicializar_interfaz_logistica(self):
-        """Inicializa la interfaz completa de logística después del login"""
-        # Limpiar ventana
+        ### inicializa la interfaz completa de logística después del login
+        # limpiamos la ventana porque si no se superpone todo
         for widget in self.root.winfo_children():
             widget.destroy()
         
-        # Configurar ventana para logística
+        # configuramos la ventana para logística
         self.root.title(f"Sistema de Logística - {self.conductor_actual['nombre']}")
         self.root.geometry("1200x800")
         self.root.resizable(True, True)
         
-        # Inicializar variables y archivos
+        # inicializamos variables y archivos
         self.inicializar_variables()
         
-        # Crear interfaz completa
+        # creamos la interfaz completa
         self.crear_interfaz_completa()
     
     def inicializar_variables(self):
-        """Inicializa todas las variables necesarias para logística"""
-        # Directorio de datos
+        ### inicializa todas las variables necesarias para logística
+        # directorio de datos, porque todo va ahí
         self.data_dir = "data"
         self.pedidos_file = os.path.join(self.data_dir, "pedidos.json")
         
-        # Variables para vehículos
+        # variables para vehículos
         self.vehiculo_seleccionado = tk.StringVar(value="Citroën Berlingo Furgón")
         self.peso_carga = tk.DoubleVar(value=1000)
         
-        # Variables para nuevo vehículo
+        # variables para nuevo vehículo, por si hay que agregar
         self.nombre_vehiculo = tk.StringVar()
         self.capacidad_vehiculo = tk.DoubleVar(value=0)
         self.volumen_vehiculo = tk.DoubleVar(value=0)
@@ -183,14 +183,14 @@ class CalculadoraLogistica:
         self.costo_combustible = tk.DoubleVar(value=1100)
         self.costo_mantenimiento = tk.DoubleVar(value=12000)
         
-        # Variables para mapa
+        # variables para el mapa
         self.ruta_actual = None
         self.destino_direccion = tk.StringVar()
         
-        # Cargar datos
+        # cargamos los datos de pedidos
         self.cargar_pedidos()
         
-        # Configurar Google Maps
+        # configuramos google maps si hay api key
         try:
             api_key = os.getenv('GOOGLE_MAPS_API_KEY')
             if api_key and api_key != 'TU_API_KEY_AQUI':
@@ -202,12 +202,12 @@ class CalculadoraLogistica:
             print(f"Advertencia: No se pudo configurar Google Maps - Error: {e}")
     
     def crear_interfaz_completa(self):
-        """Crea la interfaz completa de logística"""
-        # Frame principal
+        ### crea la interfaz completa de logística
+        # frame principal para meter todo
         self.frame_principal = ttk.Frame(self.root)
         self.frame_principal.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Barra de información del conductor
+        # barra de info del conductor
         frame_conductor_info = ttk.Frame(self.frame_principal)
         frame_conductor_info.pack(fill="x", pady=(0, 10))
         
@@ -218,11 +218,11 @@ class CalculadoraLogistica:
         ttk.Button(frame_conductor_info, text="Cerrar Sesión", 
                   command=self.logout_conductor).pack(side="right")
         
-        # Frame para información de pedidos del conductor
+        # frame para info de pedidos del conductor
         frame_pedidos_conductor = ttk.LabelFrame(self.frame_principal, text="Mis Pedidos")
         frame_pedidos_conductor.pack(fill="x", pady=(0, 10))
         
-        # Treeview para pedidos del conductor
+        # treeview para pedidos del conductor
         self.tree_pedidos_conductor = ttk.Treeview(frame_pedidos_conductor, 
                                                   columns=("id", "usuario", "direccion", "items", "estado"), 
                                                   show="headings", height=3)
@@ -233,7 +233,7 @@ class CalculadoraLogistica:
         self.tree_pedidos_conductor.heading("estado", text="Estado")
         self.tree_pedidos_conductor.pack(fill="x", pady=5)
         
-        # Botones para conductor
+        # botones para el conductor
         frame_botones_conductor = ttk.Frame(frame_pedidos_conductor)
         frame_botones_conductor.pack(pady=5)
         
@@ -249,37 +249,37 @@ class CalculadoraLogistica:
         ttk.Button(frame_botones_conductor, text="Actualizar Lista", 
                   command=self.actualizar_pedidos_conductor).pack(side="left", padx=5)
         
-        # Notebook para pestañas principales
+        # notebook para pestañas principales
         self.notebook = ttk.Notebook(self.frame_principal)
         self.notebook.pack(fill="both", expand=True)
         
-        # Crear pestañas principales
+        # crear pestañas principales
         self.crear_pestaña_mapa()
         self.crear_pestaña_calculos()
         
-        # Botón para cerrar
+        # botón para cerrar
         ttk.Button(self.frame_principal, text="Cerrar", 
                   command=self.cerrar_logistica).pack(pady=10)
         
-        # Inicializar lista de pedidos del conductor
+        # inicializar lista de pedidos del conductor
         self.actualizar_pedidos_conductor()
     
     def crear_pestaña_mapa(self):
-        """Crea la pestaña del mapa"""
+        ### crea la pestaña del mapa
         self.pestaña_mapa = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_mapa, text="Mapa")
         self.crear_panel_mapa()
     
     def crear_pestaña_calculos(self):
-        """Crea la pestaña de cálculos"""
+        ### crea la pestaña de cálculos
         self.pestaña_calculos = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_calculos, text="Cálculos")
         self.crear_panel_calculos()
     
     def logout_conductor(self):
-        """Cierra la sesión del conductor"""
+        ### cierra la sesión del conductor
         if self.conductor_actual:
-            # Verificar si tiene un pedido en proceso
+            # chequear si tiene un pedido en proceso
             pedido_actual = next((p for p in PEDIDOS if p.conductor == self.conductor_actual["nombre"] and p.estado == "en_proceso"), None)
             
             if pedido_actual:
@@ -288,25 +288,25 @@ class CalculadoraLogistica:
                 if not respuesta:
                     return
         
-        # Volver a la interfaz de login
+        # volver a la interfaz de login
         self.conductor_actual = None
         self.inicializar_interfaz_login()
     
     def inicializar_interfaz_login(self):
-        """Vuelve a la interfaz de login"""
-        # Limpiar ventana
+        ### vuelve a la interfaz de login
+        # limpiar ventana porque si no queda todo mezclado
         for widget in self.root.winfo_children():
             widget.destroy()
         
-        # Configurar ventana para login
+        # configurar ventana para login
         self.root.title("Sistema de Logística - Login")
-        self.root.geometry("600x400")  # Tamaño aumentado para mostrar todos los elementos
+        self.root.geometry("600x400")  # tamaño aumentado para mostrar todos los elementos
         self.root.resizable(False, False)
         
-        # Centrar ventana
+        # centrar ventana porque queda mejor
         self.centrar_ventana()
         
-        # Crear interfaz de login
+        # crear interfaz de login
         self.crear_interfaz_login()
 
     def crear_panel_mapa(self):
@@ -327,25 +327,25 @@ class CalculadoraLogistica:
         marco_calculos = ttk.LabelFrame(self.pestaña_calculos, text="Cálculos")
         marco_calculos.pack(side="right", fill="both", expand=True, padx=5, pady=5)
 
-        # Crear pestañas
+        # crear pestañas
         notebook = ttk.Notebook(marco_calculos)
         notebook.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Pestaña de cálculo primero
+        # pestaña de cálculo primero
         pestaña_calculo = ttk.Frame(notebook)
         notebook.add(pestaña_calculo, text="Cálculo")
         pestaña_pedidos = ttk.Frame(notebook)
         notebook.add(pestaña_pedidos, text="Pedidos")
-        # Crear paneles
+        # crear paneles
         self.crear_panel_calculo_ruta(pestaña_calculo)
         self.crear_panel_pedidos(pestaña_pedidos)
     
     def crear_panel_pedidos(self, parent):
-        # Frame para lista de pedidos
+        # frame para lista de pedidos
         frame_pedidos = ttk.LabelFrame(parent, text="Gestión de Pedidos")
         frame_pedidos.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Frame para filtros
+        # frame para filtros
         frame_filtros = ttk.Frame(frame_pedidos)
         frame_filtros.pack(fill="x", pady=5)
         
@@ -357,7 +357,7 @@ class CalculadoraLogistica:
         combo_filtro.pack(side="left", padx=5)
         combo_filtro.bind("<<ComboboxSelected>>", lambda e: self.actualizar_lista_pedidos())
         
-        # Treeview para pedidos
+        # treeview para pedidos
         self.tree_pedidos = ttk.Treeview(frame_pedidos, columns=("ID", "Usuario", "Dirección", "Items", "Estado", "Conductor"), show="headings")
         self.tree_pedidos.heading("ID", text="ID")
         self.tree_pedidos.heading("Usuario", text="Usuario")
@@ -367,39 +367,39 @@ class CalculadoraLogistica:
         self.tree_pedidos.heading("Conductor", text="Conductor")
         self.tree_pedidos.pack(fill="both", expand=True, pady=5)
         
-        # Botón para tomar pedido
+        # botón para tomar pedido
         ttk.Button(frame_pedidos, text="Tomar Pedido Seleccionado", 
                   command=self.tomar_pedido).pack(pady=5)
         
-        # Botón para marcar pedido como terminado
+        # botón para marcar pedido como terminado
         ttk.Button(frame_pedidos, text="Marcar Pedido como Terminado", 
                   command=self.marcar_pedido_terminado_general).pack(pady=5)
         
-        # Botón para actualizar lista
+        # botón para actualizar lista
         ttk.Button(frame_pedidos, text="Actualizar Lista", 
                   command=self.actualizar_lista_pedidos).pack(pady=5)
         
-        # Inicializar lista
+        # inicializar lista
         self.actualizar_lista_pedidos()
     
     def actualizar_lista_pedidos(self):
-        self.cargar_pedidos()  # Asegura que siempre se lean los pedidos más recientes del archivo
-        # Limpiar lista actual
+        self.cargar_pedidos()  # asegura que siempre se lean los pedidos más recientes del archivo
+        # limpiar lista actual
         for item in self.tree_pedidos.get_children():
             self.tree_pedidos.delete(item)
         
-        # Filtrar pedidos según el filtro de estado
+        # filtrar pedidos según el filtro de estado
         pedidos_filtrados = [p for p in PEDIDOS if self.filtro_estado.get() == "todos" or p.estado == self.filtro_estado.get()]
         
-        # Agregar todos los pedidos filtrados
+        # agregar todos los pedidos filtrados
         for pedido in pedidos_filtrados:
-            # Formatear items para mostrar
+            # formatear items para mostrar
             items_texto = []
             for item in pedido.items:
                 items_texto.append(f"{item['cantidad']}x {item['nombre']}")
             items_str = ", ".join(items_texto)
             
-            # Mostrar conductor si está asignado
+            # mostrar conductor si está asignado
             conductor_str = pedido.conductor if pedido.conductor else "Sin asignar"
             
             self.tree_pedidos.insert("", "end", values=(
@@ -412,29 +412,29 @@ class CalculadoraLogistica:
             ))
     
     def tomar_pedido(self):
-        # Obtener pedido seleccionado
+        # obtener pedido seleccionado
         seleccion = self.tree_pedidos.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
             return
         
-        # Verificar que hay un conductor logueado
+        # chequear que hay un conductor logueado
         if not self.conductor_actual:
             messagebox.showerror("Error", "Debe iniciar sesión primero")
             return
         
-        # Obtener ID del pedido
+        # obtener id del pedido
         pedido_id = int(self.tree_pedidos.item(seleccion[0])["values"][0])
         
-        # Encontrar pedido
+        # encontrar pedido
         pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
         if not pedido:
             messagebox.showerror("Error", "Pedido no encontrado")
             return
         
-        # Tomar pedido usando el conductor actual logueado
+        # tomar pedido usando el conductor actual logueado
         if pedido.tomar_pedido(self.conductor_actual["nombre"]):
-            # Cambiar estado del conductor a ocupado
+            # cambiar estado del conductor a ocupado
             conductores = cargar_conductores()
             for c in conductores:
                 if c["nombre"] == self.conductor_actual["nombre"]:
@@ -446,7 +446,7 @@ class CalculadoraLogistica:
             self.actualizar_lista_pedidos()
             self.actualizar_pedidos_conductor()
             
-            # Establecer dirección de destino en el mapa
+            # establecer dirección de destino en el mapa
             self.destino_direccion.set(pedido.direccion_destino)
         else:
             messagebox.showerror("Error", "No se pudo tomar el pedido")
@@ -468,7 +468,7 @@ class CalculadoraLogistica:
             json.dump(pedidos_data, f, ensure_ascii=False, indent=4)
     
     def crear_panel_calculo_ruta(self, parent):
-        # Layout horizontal: frame_ruta a la izquierda, resultados a la derecha
+        # layout horizontal: frame_ruta a la izquierda, resultados a la derecha
         frame_main = ttk.Frame(parent)
         frame_main.pack(fill="both", expand=True)
 
@@ -490,7 +490,7 @@ class CalculadoraLogistica:
         ttk.Button(frame_ruta, text="Calcular Mejor Ruta", 
                   command=self.calcular_mejor_ruta).pack(pady=20)
 
-        # Resultados a la derecha, más grande y con scroll
+        # resultados a la derecha, más grande y con scroll
         frame_resultados = ttk.LabelFrame(frame_main, text="Resultados")
         frame_resultados.pack(side="left", fill="both", expand=True, padx=5, pady=5)
         self.text_resultados = tk.Text(frame_resultados, wrap="word", height=20)
@@ -501,7 +501,7 @@ class CalculadoraLogistica:
         self.marco_resultados = frame_resultados
 
     def obtener_ruta_osrm(self, puntos):
-        #solicita a OSRM la ruta real entre los puntos dados
+        # solicita a OSRM la ruta real entre los puntos dados
         if len(puntos) < 2:
             return puntos
         # OSRM espera lon,lat
@@ -541,7 +541,7 @@ class CalculadoraLogistica:
         
     def obtener_info_peajes(self, origen, destino):
         try:
-            # Obtener direcciones con información de peajes
+            # obtener direcciones con información de peajes
             directions_result = self.gmaps.directions(
                 origen,
                 destino,
@@ -555,22 +555,22 @@ class CalculadoraLogistica:
                 print("No se encontraron rutas disponibles")
                 return 0, 0
             
-            # Buscar la ruta con menos peajes
+            # buscar la ruta con menos peajes
             mejor_ruta = None
             menos_peajes = float('inf')
             
             for ruta in directions_result:
-                # Contar peajes en la ruta
+                # contar peajes en la ruta
                 num_peajes = 0
                 for paso in ruta['legs'][0]['steps']:
-                    # Verificar en las instrucciones y el nombre del paso
+                    # verificar en las instrucciones y el nombre del paso
                     instrucciones = paso.get('html_instructions', '').lower()
                     nombre_paso = paso.get('name', '').lower()
                     
-                    # Palabras clave que indican peaje
+                    # palabras clave que indican peaje
                     palabras_clave = ['peaje', 'toll', 'cobro', 'pago']
                     
-                    # Verificar si alguna palabra clave está presente
+                    # verificar si alguna palabra clave está presente
                     if any(palabra in instrucciones or palabra in nombre_paso for palabra in palabras_clave):
                         num_peajes += 1
                 
@@ -579,14 +579,14 @@ class CalculadoraLogistica:
                     mejor_ruta = ruta
             
             if mejor_ruta:
-                # Calcular costo total de peajes basado en el tipo de vehículo
+                # calcular costo total de peajes basado en el tipo de vehículo
                 vehiculo = VEHICULOS_DISPONIBLES[self.vehiculo_seleccionado.get()]
                 costo_base_peaje = 900  # Costo estimado por peaje segun https://www.argentina.gob.ar/transporte/vialidad-nacional/institucional/informacion-publica/tarifas-de-peajes
                 
-                # Ajustar costo según el tipo de vehículo
-                if vehiculo.capacidad_kg > 1000:  # Vehículos pesados
+                # ajustar costo según el tipo de vehículo
+                if vehiculo.capacidad_kg > 1000:  # vehículos pesados
                     costo_base_peaje *= 1.5
-                elif vehiculo.capacidad_kg > 500:  # Vehículos medianos
+                elif vehiculo.capacidad_kg > 500:  # vehículos medianos
                     costo_base_peaje *= 1.2
                 
                 costo_peajes = menos_peajes * costo_base_peaje
@@ -594,39 +594,39 @@ class CalculadoraLogistica:
             return 0, 0
             
         except Exception as e:
-            print(f"Error obteniendo información de peajes: {e}")
+            print(f"error obteniendo información de peajes: {e}")
             return 0, 0
 
     def calcular_mejor_ruta(self):
         try:
-            # Punto de origen fijo (Puerto de Rosario)
+            # punto de origen fijo (puerto de rosario)
             punto_origen = PuntoRuta(
                 nombre="Puerto de Rosario",
                 latitud=-32.9510139,
                 longitud=-60.6260167
             )
             
-            # Obtener coordenadas de destino
+            # obtener coordenadas de destino
             destino = self.geocoder.geocode(self.destino_direccion.get())
             if not destino:
                 messagebox.showerror("Error", "No se pudo encontrar la dirección de destino")
                 return
             
-            # Crear punto de destino
+            # crear punto de destino
             punto_destino = PuntoRuta(
                 nombre=self.destino_direccion.get(),
                 latitud=destino.latitude,
                 longitud=destino.longitude
             )
             
-            # Obtener vehículo seleccionado
+            # obtener vehículo seleccionado
             vehiculo = VEHICULOS_DISPONIBLES[self.vehiculo_seleccionado.get()]
             peso = self.peso_carga.get()
             
-            # Calcular número de viajes necesarios
+            # calcular número de viajes necesarios
             viajes_necesarios = math.ceil(peso / vehiculo.capacidad_kg)
             
-            # Definir las rutas posibles con sus puntos intermedios
+            # definir las rutas posibles con sus puntos intermedios
             rutas_posibles = {
                 "Ruta Nacional 9": [
                     PuntoRuta("San Nicolás", -33.3358, -60.2102),
@@ -646,27 +646,27 @@ class CalculadoraLogistica:
                 ]
             }
             
-            # Calcular la mejor ruta
+            # calcular la mejor ruta
             mejor_ruta = None
             mejor_costo_total = float('inf')
             mejor_nombre_ruta = ""
             mejor_num_peajes = 0
             
             for nombre_ruta, puntos_intermedios in rutas_posibles.items():
-                # Crear puntos de ruta
+                # crear puntos de ruta
                 puntos_ruta = [punto_origen] + puntos_intermedios + [punto_destino]
                 
-                # Calcular distancia total
+                # calcular distancia total
                 distancia = sum(Ruta.calcular_distancia(puntos_ruta[i], puntos_ruta[i+1]) 
                               for i in range(len(puntos_ruta)-1))
                 
-                # Obtener información de peajes
+                # obtener información de peajes
                 num_peajes, costo_peajes = self.obtener_info_peajes(
                     f"{punto_origen.latitud},{punto_origen.longitud}",
                     f"{punto_destino.latitud},{punto_destino.longitud}"
                 )
                 
-                # Calcular costos
+                # calcular costos
                 costo_combustible = vehiculo.calcular_costo_combustible(distancia) * viajes_necesarios
                 # Costo de mantenimiento fijo al rededor de los 550 km recorridos
                 costo_mantenimiento = 200000 * viajes_necesarios if distancia >= 550 else 0
@@ -674,7 +674,7 @@ class CalculadoraLogistica:
                 costo_conductor = CONDUCTOR_PREDETERMINADO.calcular_costo_viaje(tiempo_estimado / 24)
                 costo_total = costo_combustible + costo_mantenimiento + costo_conductor + costo_peajes
                 
-                # Actualizar mejor ruta si es necesario
+                # actualizar mejor ruta si es necesario
                 if costo_total < mejor_costo_total:
                     mejor_costo_total = costo_total
                     mejor_ruta = Ruta(
@@ -687,13 +687,13 @@ class CalculadoraLogistica:
                     mejor_nombre_ruta = nombre_ruta
                     mejor_num_peajes = num_peajes
             
-            # Actualizar mapa
+            # actualizar mapa
             self.actualizar_ruta_mapa(mejor_ruta)
             
-            # Limpiar resultados anteriores
+            # limpiar resultados anteriores
             self.text_resultados.delete(1.0, tk.END)
 
-            # Mostrar resultados
+            # mostrar resultados
             resultados = [
                 f"Origen: Puerto de Rosario",
                 f"Destino: {self.destino_direccion.get()}",
@@ -715,7 +715,7 @@ class CalculadoraLogistica:
             self.text_resultados.insert(tk.END, "\n".join(resultados))
             self.text_resultados.see(tk.END)
             
-            # Verificar si el vehiculo puede transportar el peso
+            # verificar si el vehiculo puede transportar el peso
             if not vehiculo.puede_transportar_peso(peso):
                 messagebox.showinfo("Información", 
                     f"El peso total ({peso}kg) excede la capacidad del vehículo ({vehiculo.capacidad_kg}kg).\n" +
@@ -730,7 +730,7 @@ class CalculadoraLogistica:
             try:
                 with open(self.pedidos_file, 'r', encoding='utf-8') as f:
                     contenido = f.read().strip()
-                    if contenido:  # Verificar que el archivo no esté vacío
+                    if contenido:  # verificar que el archivo no esté vacío
                         pedidos_data = json.loads(contenido)
                         PEDIDOS.clear()
                         for pedido_dict in pedidos_data:
@@ -746,13 +746,13 @@ class CalculadoraLogistica:
                                 pedido.fecha_creacion = datetime.fromisoformat(pedido_dict["fecha_creacion"])
                             PEDIDOS.append(pedido)
                     else:
-                        # Archivo vacío, inicializar lista vacía
+                        # archivo vacío, inicializar lista vacía
                         PEDIDOS.clear()
             except (json.JSONDecodeError, FileNotFoundError):
-                # Si hay error al leer JSON, inicializar lista vacía
+                # si hay error al leer json, inicializar lista vacía
                 PEDIDOS.clear()
         else:
-            # Archivo no existe, inicializar lista vacía
+            # archivo no existe, inicializar lista vacía
             PEDIDOS.clear()
 
     def cerrar_logistica(self):
@@ -761,19 +761,19 @@ class CalculadoraLogistica:
             self.parent.deiconify()
 
     def actualizar_pedidos_conductor(self):
-        """Actualiza la lista de pedidos del conductor logueado"""
-        # Limpiar lista actual
+        ### actualiza la lista de pedidos del conductor logueado
+        # limpiar lista actual
         for item in self.tree_pedidos_conductor.get_children():
             self.tree_pedidos_conductor.delete(item)
         
         if not self.conductor_actual:
             return
         
-        # Filtrar pedidos del conductor actual
+        # filtrar pedidos del conductor actual
         pedidos_conductor = [p for p in PEDIDOS if p.conductor == self.conductor_actual["nombre"]]
         
         for pedido in pedidos_conductor:
-            # Formatear items para mostrar
+            # formatear items para mostrar
             items_texto = []
             for item in pedido.items:
                 items_texto.append(f"{item['cantidad']}x {item['nombre']}")
@@ -792,81 +792,81 @@ class CalculadoraLogistica:
             messagebox.showerror("Error", "Debe iniciar sesión primero")
             return
         
-        # Buscar pedidos pendientes
+        # buscar pedidos pendientes
         pedidos_pendientes = [p for p in PEDIDOS if p.estado == "pendiente"]
         
         if not pedidos_pendientes:
             messagebox.showinfo("Información", "No hay pedidos pendientes disponibles")
             return
         
-        # Tomar el primer pedido pendiente
+        # tomar el primer pedido pendiente
         pedido = pedidos_pendientes[0]
         
-        # Asignar conductor al pedido
+        # asignar conductor al pedido
         pedido.conductor = self.conductor_actual["nombre"]
         pedido.estado = "en_proceso"
         
-        # Cambiar estado del conductor a ocupado
+        # cambiar estado del conductor a ocupado
         conductores = cargar_conductores()
         for c in conductores:
             if c["nombre"] == self.conductor_actual["nombre"]:
                 c["estado"] = "ocupado"
         guardar_conductores(conductores)
         
-        # Guardar cambios
+        # guardar cambios
         self.guardar_pedidos()
         
-        # Actualizar listas
+        # actualizar listas
         self.actualizar_lista_pedidos()
         self.actualizar_pedidos_conductor()
         
         messagebox.showinfo("Éxito", f"Pedido #{pedido.id} asignado automáticamente")
         
-        # Establecer dirección de destino en el mapa
+        # establecer dirección de destino en el mapa
         self.destino_direccion.set(pedido.direccion_destino)
 
     def marcar_pedido_terminado_conductor(self):
-        """Función específica para que el conductor marque su pedido como terminado"""
+        ### función específica para que el conductor marque su pedido como terminado
         if not self.conductor_actual:
             messagebox.showerror("Error", "Debe estar logueado")
             return
         
-        # Obtener pedido seleccionado
+        # obtener pedido seleccionado
         seleccion = self.tree_pedidos_conductor.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
             return
         
-        # Obtener ID del pedido
+        # obtener id del pedido
         pedido_id = int(self.tree_pedidos_conductor.item(seleccion[0])["values"][0])
         
-        # Encontrar pedido
+        # encontrar pedido
         pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
         if not pedido:
             messagebox.showerror("Error", "Pedido no encontrado")
             return
         
-        # Verificar que el pedido pertenece al conductor logueado
+        # verificar que el pedido pertenece al conductor logueado
         if pedido.conductor != self.conductor_actual["nombre"]:
             messagebox.showerror("Error", "Este pedido no le pertenece")
             return
         
-        # Verificar que el pedido esté en proceso
+        # verificar que el pedido esté en proceso
         if pedido.estado != "en_proceso":
             messagebox.showwarning("Advertencia", "Solo se pueden marcar como terminados los pedidos en proceso")
             return
         
-        # Marcar pedido como terminado
+        # marcar pedido como terminado
         if pedido.completar_pedido():
             self.guardar_pedidos()
-            # Cambiar estado del conductor a disponible y guardar
+            # cambiar estado del conductor a disponible y guardar
             conductores = cargar_conductores()
             for c in conductores:
                 if c["nombre"] == self.conductor_actual["nombre"]:
                     c["estado"] = "disponible"
             guardar_conductores(conductores)
             
-            # Actualizar listas
+            # actualizar listas
             self.actualizar_lista_pedidos()
             self.actualizar_pedidos_conductor()
             
@@ -875,25 +875,25 @@ class CalculadoraLogistica:
             messagebox.showerror("Error", "No se pudo marcar el pedido como terminado")
 
     def marcar_pedido_terminado_general(self):
-        # Obtener pedido seleccionado
+        # obtener pedido seleccionado
         seleccion = self.tree_pedidos.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
             return
         
-        # Obtener ID del pedido
+        # obtener id del pedido
         pedido_id = int(self.tree_pedidos.item(seleccion[0])["values"][0])
         
-        # Encontrar pedido
+        # encontrar pedido
         pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
         if not pedido:
             messagebox.showerror("Error", "Pedido no encontrado")
             return
         
-        # Marcar pedido como terminado
+        # marcar pedido como terminado
         if pedido.completar_pedido():
             self.guardar_pedidos()
-            # Actualizar listas
+            # actualizar listas
             self.actualizar_lista_pedidos()
             self.actualizar_pedidos_conductor()
             
@@ -902,29 +902,29 @@ class CalculadoraLogistica:
             messagebox.showerror("Error", "No se pudo marcar el pedido como terminado")
 
     def cargar_direccion_pedido(self):
-        """Carga la dirección del pedido seleccionado al panel de cálculos"""
-        # Obtener pedido seleccionado del conductor
+        ### carga la dirección del pedido seleccionado al panel de cálculos
+        # obtener pedido seleccionado del conductor
         seleccion = self.tree_pedidos_conductor.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
             return
         
         try:
-            # Obtener ID del pedido
+            # obtener id del pedido
             valores = self.tree_pedidos_conductor.item(seleccion[0])["values"]
             pedido_id = int(valores[0])
             
-            # Encontrar pedido
+            # encontrar pedido
             pedido = next((p for p in PEDIDOS if p.id == pedido_id), None)
             if not pedido:
                 messagebox.showerror("Error", "Pedido no encontrado")
                 return
             
-            # Establecer dirección del pedido en el panel de cálculos
+            # establecer dirección del pedido en el panel de cálculos
             self.destino_direccion.set(pedido.direccion_destino)
             
-            # Cambiar a la pestaña de cálculos
-            self.notebook.select(0)  # Primera pestaña (Cálculos)
+            # cambiar a la pestaña de cálculos
+            self.notebook.select(0)  # primera pestaña (cálculos)
             
             messagebox.showinfo("Éxito", f"Dirección del pedido #{pedido_id} cargada en el panel de cálculos")
             

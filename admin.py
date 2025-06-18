@@ -13,7 +13,7 @@ import sys
 from dotenv import load_dotenv
 import hashlib
 
-# Cargar variables de entorno
+# cargar variables de entorno
 load_dotenv()
 
 class InterfazAdmin:
@@ -21,7 +21,7 @@ class InterfazAdmin:
         self.root = root
         self.parent = parent
         
-        # Configurar ventana inicial para login
+        # configurar ventana inicial para login
         self.root.title("Panel de Administración - Login")
         self.root.geometry("600x400")
         self.root.resizable(False, False)
@@ -30,11 +30,11 @@ class InterfazAdmin:
         # Centrar ventana
         self.centrar_ventana()
         
-        # Crear interfaz de login
+        # crear interfaz de login
         self.crear_interfaz_login()
         
     def centrar_ventana(self):
-        """Centra la ventana en la pantalla"""
+        ### centra la ventana en la pantalla
         self.root.update_idletasks()
         width = self.root.winfo_width()
         height = self.root.winfo_height()
@@ -43,27 +43,27 @@ class InterfazAdmin:
         self.root.geometry(f'{width}x{height}+{x}+{y}')
     
     def crear_interfaz_login(self):
-        """Crea la interfaz de login"""
-        # Frame principal
+        ### crea la interfaz de login
+        # frame principal
         frame_principal = ttk.Frame(self.root)
         frame_principal.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Título
+        # título
         ttk.Label(frame_principal, text="PANEL DE ADMINISTRACIÓN", 
                  font=("Arial", 16, "bold")).pack(pady=20)
         
         ttk.Label(frame_principal, text="Login de Administrador", 
                  font=("Arial", 12)).pack(pady=10)
         
-        # Frame para formulario
+        # frame para el formulario
         frame_formulario = ttk.LabelFrame(frame_principal, text="Credenciales")
         frame_formulario.pack(fill="x", pady=20)
         
-        # Variables para login
+        # variables para el login
         self.usuario_admin = tk.StringVar()
         self.password_admin = tk.StringVar()
         
-        # Campos del formulario
+        # campos del formulario
         ttk.Label(frame_formulario, text="Usuario:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
         entry_usuario = ttk.Entry(frame_formulario, textvariable=self.usuario_admin, width=25)
         entry_usuario.grid(row=0, column=1, padx=10, pady=10)
@@ -72,15 +72,15 @@ class InterfazAdmin:
         entry_password = ttk.Entry(frame_formulario, textvariable=self.password_admin, show="*", width=25)
         entry_password.grid(row=1, column=1, padx=10, pady=10)
         
-        # Configurar Enter para hacer login
+        # enter hace login, más rápido
         entry_usuario.bind('<Return>', lambda e: self.login_admin())
         entry_password.bind('<Return>', lambda e: self.login_admin())
         
-        # Botones
+        # botones para loguear o cancelar
         frame_botones = ttk.Frame(frame_principal)
         frame_botones.pack(pady=20)
         
-        # Botón principal de login
+        # botón principal de login
         btn_login = ttk.Button(
             frame_botones,
             text="INICIAR SESIÓN",
@@ -88,7 +88,7 @@ class InterfazAdmin:
         )
         btn_login.pack(pady=10, ipadx=20, ipady=10)
         
-        # Botón cancelar
+        # botón cancelar por si te arrepentís
         ttk.Button(
             frame_botones,
             text="Cancelar",
@@ -96,15 +96,15 @@ class InterfazAdmin:
             width=15
         ).pack(pady=5)
         
-        # Instrucciones
+        # instrucciones
         ttk.Label(frame_principal, text="Presiona Enter en cualquier campo para iniciar sesión", 
                  font=("Arial", 9), foreground="gray").pack(pady=5)
         
-        # Enfocar en el campo de usuario
+        # dejamos el foco en el usuario para que sea más rápido
         entry_usuario.focus()
     
     def login_admin(self):
-        """Función de login del administrador"""
+        ### función de login del administrador
         usuario = self.usuario_admin.get().strip()
         password = self.password_admin.get().strip()
         
@@ -112,27 +112,27 @@ class InterfazAdmin:
             messagebox.showerror("Error", "Por favor complete usuario y contraseña")
             return
         
-        # Obtener credenciales desde variables de entorno
+        # obtener credenciales desde variables de entorno
         admin_user = os.getenv('ADMIN_USER', 'admin')
         admin_password_hash = os.getenv('ADMIN_PASSWORD_HASH', '')
         
-        # Si no hay hash configurado, usar credenciales por defecto
+        # si no hay hash configurado, usar credenciales por defecto
         if not admin_password_hash:
             admin_password_hash = hashlib.sha256('admin123'.encode()).hexdigest()
         
-        # Verificar credenciales
+        # verificar credenciales
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
         if usuario == admin_user and password_hash == admin_password_hash:
-            # Login exitoso
+            # login exitoso
             messagebox.showinfo("Bienvenido", "Acceso concedido al Panel de Administración")
             
-            # Inicializar la interfaz completa de administración
+            # inicializar la interfaz completa de administración
             self.inicializar_interfaz_admin()
         else:
             messagebox.showerror("Error", "Usuario o contraseña incorrectos")
-            self.password_admin.set("")  # Limpiar contraseña
-            # Enfocar en el campo de contraseña
+            self.password_admin.set("")  # limpiar contraseña
+            # enfocar en el campo de contraseña
             for widget in self.root.winfo_children():
                 if isinstance(widget, ttk.Frame):
                     for child in widget.winfo_children():
@@ -143,42 +143,42 @@ class InterfazAdmin:
                                     break
     
     def cancelar_login(self):
-        """Cancela el login y cierra la ventana"""
+        ### cancela el login y cierra la ventana
         self.cerrar_admin()
     
     def inicializar_interfaz_admin(self):
-        """Inicializa la interfaz completa de administración después del login"""
-        # Limpiar ventana
+        ### inicializa la interfaz completa de administración después del login
+        # limpiar ventana porque si no se superpone todo
         for widget in self.root.winfo_children():
             widget.destroy()
         
-        # Configurar ventana para administración
+        # configurar ventana para administración
         self.root.title("Panel de Administración")
         self.root.geometry("1400x900")
         self.root.resizable(True, True)
         
-        # Variables de datos
+        # variables de datos, porque todo va ahí
         self.data_dir = "data"
         self.productos_file = os.path.join(self.data_dir, "productos.json")
         self.pedidos_file = os.path.join(self.data_dir, "pedidos.json")
         self.multas_file = os.path.join(self.data_dir, "multas.json")
         self.reportes_file = os.path.join(self.data_dir, "reportes.json")
         
-        # Cargar datos
+        # cargar datos
         self.cargar_datos()
         
-        # Crear interfaz
+        # crear interfaz
         self.crear_interfaz()
         
     def cargar_datos(self):
-        # Cargar productos
+        # cargar productos
         if os.path.exists(self.productos_file):
             try:
                 with open(self.productos_file, 'r', encoding='utf-8') as f:
                     contenido = f.read().strip()
                     if contenido:
                         self.productos = json.loads(contenido)
-                        # Agregar campos faltantes a productos existentes
+                        # agregar campos faltantes a productos existentes
                         for producto in self.productos:
                             if "categoria" not in producto:
                                 producto["categoria"] = "otros"
@@ -193,14 +193,14 @@ class InterfazAdmin:
         else:
             self.productos = []
         
-        # Cargar pedidos
+        # cargar pedidos
         if os.path.exists(self.pedidos_file):
             try:
                 with open(self.pedidos_file, 'r', encoding='utf-8') as f:
                     contenido = f.read().strip()
                     if contenido:
                         pedidos_data = json.loads(contenido)
-                        PEDIDOS.clear()  # Limpiar lista actual
+                        PEDIDOS.clear()  # limpiar lista actual
                         for pedido_dict in pedidos_data:
                             pedido = Pedido(
                                 id=pedido_dict["id"],
@@ -220,7 +220,7 @@ class InterfazAdmin:
         else:
             PEDIDOS.clear()
         
-        # Cargar multas
+        # cargar multas
         if os.path.exists(self.multas_file):
             try:
                 with open(self.multas_file, 'r', encoding='utf-8') as f:
@@ -234,7 +234,7 @@ class InterfazAdmin:
         else:
             self.multas = []
         
-        # Cargar reportes
+        # cargar reportes
         if os.path.exists(self.reportes_file):
             try:
                 with open(self.reportes_file, 'r', encoding='utf-8') as f:
@@ -249,32 +249,32 @@ class InterfazAdmin:
             self.reportes = []
     
     def guardar_datos(self):
-        # Guardar productos
+        # guardar productos
         with open(self.productos_file, 'w', encoding='utf-8') as f:
             json.dump(self.productos, f, ensure_ascii=False, indent=4)
         
-        # Guardar multas
+        # guardar multas
         with open(self.multas_file, 'w', encoding='utf-8') as f:
             json.dump(self.multas, f, ensure_ascii=False, indent=4)
         
-        # Guardar reportes
+        # guardar reportes
         with open(self.reportes_file, 'w', encoding='utf-8') as f:
             json.dump(self.reportes, f, ensure_ascii=False, indent=4)
     
     def crear_interfaz(self):
-        # Frame principal
+        # frame principal para meter todo
         self.frame_principal = ttk.Frame(self.root)
         self.frame_principal.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Título
+        # título, porque si no nadie sabe qué es esto
         ttk.Label(self.frame_principal, text="PANEL DE ADMINISTRACIÓN", 
                  font=("Arial", 16, "bold")).pack(pady=10)
         
-        # Notebook para pestañas
+        # notebook para pestañas
         self.notebook = ttk.Notebook(self.frame_principal)
         self.notebook.pack(fill="both", expand=True)
         
-        # Crear pestañas
+        # crear pestañas
         self.crear_pestaña_productos()
         self.crear_pestaña_estadisticas()
         self.crear_pestaña_conductores()
@@ -282,28 +282,28 @@ class InterfazAdmin:
         self.crear_pestaña_multas()
         self.crear_pestaña_reportes()
         
-        # Frame para botones
+        # frame para botones
         frame_botones = ttk.Frame(self.frame_principal)
         frame_botones.pack(pady=10)
         
-        # Botón de logout
+        # botón de logout
         ttk.Button(frame_botones, text="Cerrar Sesión", 
                   command=self.logout_admin).pack(side="left", padx=5)
         
-        # Botón para cerrar
+        # botón para cerrar
         ttk.Button(frame_botones, text="Cerrar", 
                   command=self.cerrar_admin).pack(side="left", padx=5)
     
     def crear_pestaña_productos(self):
-        # Pestaña de productos
+        # pestaña de productos
         self.pestaña_productos = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_productos, text="Gestión de Productos")
         
-        # Frame para agregar productos
+        # frame para agregar productos
         frame_agregar = ttk.LabelFrame(self.pestaña_productos, text="Agregar/Editar Producto")
         frame_agregar.pack(fill="x", padx=5, pady=5)
         
-        # Variables para formulario
+        # variables para formulario
         self.nombre_producto = tk.StringVar()
         self.categoria_producto = tk.StringVar(value="alimentos")
         self.precio_producto = tk.DoubleVar()
@@ -311,9 +311,9 @@ class InterfazAdmin:
         self.stock_producto = tk.IntVar()
         self.marca_producto = tk.StringVar()
         self.es_marca_propia = tk.BooleanVar()
-        self.producto_editando = None  # Para rastrear qué producto se está editando
+        self.producto_editando = None  # para rastrear qué producto se está editando
         
-        # Campos del formulario
+        # campos del formulario
         ttk.Label(frame_agregar, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         ttk.Entry(frame_agregar, textvariable=self.nombre_producto, width=30).grid(row=0, column=1, padx=5, pady=5)
         
@@ -335,7 +335,7 @@ class InterfazAdmin:
         
         ttk.Checkbutton(frame_agregar, text="Marca Propia", variable=self.es_marca_propia).grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="w")
         
-        # Botones
+        # botones
         ttk.Button(frame_agregar, text="Agregar Producto", 
                   command=self.agregar_producto).grid(row=3, column=2, padx=5, pady=5)
         ttk.Button(frame_agregar, text="Editar Producto Seleccionado", 
@@ -345,11 +345,11 @@ class InterfazAdmin:
         ttk.Button(frame_agregar, text="Cancelar Edición", 
                   command=self.cancelar_edicion).grid(row=4, column=3, padx=5, pady=5)
         
-        # Frame para lista de productos
+        # frame para lista de productos
         frame_lista = ttk.LabelFrame(self.pestaña_productos, text="Lista de Productos")
         frame_lista.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Treeview para productos
+        # treeview para productos
         self.tree_productos = ttk.Treeview(frame_lista, 
                                          columns=("nombre", "categoria", "precio", "peso", "stock", "marca", "marca_propia"), 
                                          show="headings")
@@ -362,19 +362,19 @@ class InterfazAdmin:
         self.tree_productos.heading("marca_propia", text="Marca Propia")
         self.tree_productos.pack(fill="both", expand=True, pady=5)
         
-        # Botón para actualizar lista
+        # botón para actualizar lista
         ttk.Button(frame_lista, text="Actualizar Lista", 
                   command=self.actualizar_lista_productos).pack(pady=5)
         
-        # Inicializar lista
+        # inicializar lista
         self.actualizar_lista_productos()
     
     def crear_pestaña_estadisticas(self):
-        # Pestaña de estadísticas
+        # pestaña de estadísticas
         self.pestaña_estadisticas = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_estadisticas, text="Estadísticas")
         
-        # Frame para filtros
+        # frame para filtros
         frame_filtros = ttk.LabelFrame(self.pestaña_estadisticas, text="Filtros")
         frame_filtros.pack(fill="x", padx=5, pady=5)
         
@@ -385,16 +385,16 @@ class InterfazAdmin:
         ttk.Button(frame_filtros, text="Generar Estadísticas", 
                   command=self.generar_estadisticas).pack(side="left", padx=5)
         
-        # Frame para gráficos
+        # frame para gráficos
         frame_graficos = ttk.LabelFrame(self.pestaña_estadisticas, text="Gráficos")
         frame_graficos.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Crear figura de matplotlib
+        # crear figura de matplotlib
         self.fig, (self.ax1, self.ax2) = plt.subplots(1, 2, figsize=(12, 6))
         self.canvas = FigureCanvasTkAgg(self.fig, frame_graficos)
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
         
-        # Frame para estadísticas detalladas
+        # frame para estadísticas detalladas
         frame_detalle = ttk.LabelFrame(self.pestaña_estadisticas, text="Detalle")
         frame_detalle.pack(fill="x", padx=5, pady=5)
         
@@ -402,24 +402,24 @@ class InterfazAdmin:
         self.texto_estadisticas.pack(fill="x", padx=5, pady=5)
     
     def crear_pestaña_conductores(self):
-        # Pestaña de conductores
+        # pestaña de conductores
         self.pestaña_conductores = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_conductores, text="Gestión de Conductores y Pedidos")
         
-        # Frame para agregar conductor
+        # frame para agregar conductor
         frame_agregar = ttk.LabelFrame(self.pestaña_conductores, text="Agregar/Editar Conductor")
         frame_agregar.pack(fill="x", padx=5, pady=5)
         
-        # Variables para formulario
+        # variables para formulario
         self.nombre_conductor = tk.StringVar()
         self.dni_conductor = tk.StringVar()
         self.telefono_conductor = tk.StringVar()
         self.usuario_conductor = tk.StringVar()
         self.password_conductor = tk.StringVar()
         self.licencia_conductor = tk.StringVar(value="B1")
-        self.conductor_editando = None  # Para rastrear qué conductor se está editando
+        self.conductor_editando = None  # para rastrear qué conductor se está editando
         
-        # Campos del formulario
+        # campos del formulario
         ttk.Label(frame_agregar, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         ttk.Entry(frame_agregar, textvariable=self.nombre_conductor, width=25).grid(row=0, column=1, padx=5, pady=5)
         
@@ -439,7 +439,7 @@ class InterfazAdmin:
         ttk.Label(frame_agregar, text="Contraseña:").grid(row=2, column=2, padx=5, pady=5, sticky="w")
         ttk.Entry(frame_agregar, textvariable=self.password_conductor, show="*", width=15).grid(row=2, column=3, padx=5, pady=5)
         
-        # Botones
+        # botones
         ttk.Button(frame_agregar, text="Agregar Conductor", 
                   command=self.agregar_conductor).grid(row=3, column=0, columnspan=4, padx=5, pady=5)
         ttk.Button(frame_agregar, text="Editar Conductor Seleccionado", 
@@ -449,11 +449,11 @@ class InterfazAdmin:
         ttk.Button(frame_agregar, text="Cancelar Edición", 
                   command=self.cancelar_edicion_conductor).grid(row=6, column=0, columnspan=4, padx=5, pady=5)
         
-        # Frame para estado de conductores
+        # frame para estado de conductores
         frame_conductores = ttk.LabelFrame(self.pestaña_conductores, text="Estado de Conductores")
         frame_conductores.pack(fill="x", padx=5, pady=5)
         
-        # Treeview para conductores
+        # treeview para conductores
         self.tree_conductores = ttk.Treeview(frame_conductores, 
                                             columns=("nombre", "licencia", "estado", "pedido_actual"), 
                                             show="headings", height=4)
@@ -463,19 +463,19 @@ class InterfazAdmin:
         self.tree_conductores.heading("pedido_actual", text="Pedido Actual")
         self.tree_conductores.pack(fill="x", pady=5)
         
-        # Frame para gestión de pedidos
+        # frame para gestión de pedidos
         frame_gestion_pedidos = ttk.LabelFrame(self.pestaña_conductores, text="Gestión de Pedidos")
         frame_gestion_pedidos.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Notebook para diferentes estados de pedidos
+        # notebook para diferentes estados de pedidos
         notebook_pedidos = ttk.Notebook(frame_gestion_pedidos)
         notebook_pedidos.pack(fill="both", expand=True, pady=5)
         
-        # Pestaña de pedidos disponibles
+        # pestaña de pedidos disponibles
         pestaña_disponibles = ttk.Frame(notebook_pedidos)
         notebook_pedidos.add(pestaña_disponibles, text="Pedidos Disponibles")
         
-        # Treeview para pedidos disponibles
+        # treeview para pedidos disponibles
         self.tree_pedidos_disponibles = ttk.Treeview(pestaña_disponibles, 
                                                     columns=("id", "usuario", "direccion", "items", "fecha"), 
                                                     show="headings", height=4)
@@ -486,11 +486,11 @@ class InterfazAdmin:
         self.tree_pedidos_disponibles.heading("fecha", text="Fecha")
         self.tree_pedidos_disponibles.pack(fill="both", expand=True, pady=5)
         
-        # Pestaña de pedidos en curso
+        # pestaña de pedidos en curso
         pestaña_curso = ttk.Frame(notebook_pedidos)
         notebook_pedidos.add(pestaña_curso, text="Pedidos en Curso")
         
-        # Treeview para pedidos en curso
+        # treeview para pedidos en curso
         self.tree_pedidos_curso = ttk.Treeview(pestaña_curso, 
                                               columns=("id", "usuario", "direccion", "conductor", "fecha"), 
                                               show="headings", height=4)
@@ -501,11 +501,11 @@ class InterfazAdmin:
         self.tree_pedidos_curso.heading("fecha", text="Fecha")
         self.tree_pedidos_curso.pack(fill="both", expand=True, pady=5)
         
-        # Pestaña de pedidos completados
+        # pestaña de pedidos completados
         pestaña_completados = ttk.Frame(notebook_pedidos)
         notebook_pedidos.add(pestaña_completados, text="Pedidos Completados")
         
-        # Treeview para pedidos completados
+        # treeview para pedidos completados
         self.tree_pedidos_completados = ttk.Treeview(pestaña_completados, 
                                                     columns=("id", "usuario", "direccion", "conductor", "fecha"), 
                                                     show="headings", height=4)
@@ -516,7 +516,7 @@ class InterfazAdmin:
         self.tree_pedidos_completados.heading("fecha", text="Fecha")
         self.tree_pedidos_completados.pack(fill="both", expand=True, pady=5)
         
-        # Botones para gestión de pedidos
+        # botones para gestión de pedidos
         frame_botones_pedidos = ttk.Frame(frame_gestion_pedidos)
         frame_botones_pedidos.pack(pady=5)
         
@@ -529,25 +529,25 @@ class InterfazAdmin:
         ttk.Button(frame_botones_pedidos, text="Actualizar Todas las Listas", 
                   command=self.actualizar_listas_admin).pack(side="left", padx=5)
         
-        # Botón para actualizar lista de conductores
+        # botón para actualizar lista de conductores
         ttk.Button(frame_conductores, text="Actualizar Lista de Conductores", 
                   command=self.actualizar_lista_conductores).pack(pady=5)
         
-        # Inicializar listas
+        # inicializar listas
         self.actualizar_lista_conductores()
         self.actualizar_lista_pedidos_disponibles()
         self.actualizar_listas_pedidos()
     
     def crear_pestaña_vehiculos(self):
-        # Pestaña de vehículos
+        # pestaña de vehículos
         self.pestaña_vehiculos = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_vehiculos, text="Gestión de Vehículos")
         
-        # Frame para agregar vehículo
+        # frame para agregar vehículo
         frame_agregar = ttk.LabelFrame(self.pestaña_vehiculos, text="Agregar Vehículo")
         frame_agregar.pack(fill="x", padx=5, pady=5)
         
-        # Variables para formulario
+        # variables para formulario
         self.nombre_vehiculo = tk.StringVar()
         self.capacidad_vehiculo = tk.DoubleVar()
         self.consumo_vehiculo = tk.DoubleVar()
@@ -556,7 +556,7 @@ class InterfazAdmin:
         self.costo_mantenimiento = tk.DoubleVar(value=12000)
         self.es_respaldo = tk.BooleanVar()
         
-        # Campos del formulario
+        # campos del formulario
         ttk.Label(frame_agregar, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         ttk.Entry(frame_agregar, textvariable=self.nombre_vehiculo, width=30).grid(row=0, column=1, padx=5, pady=5)
         
@@ -578,15 +578,15 @@ class InterfazAdmin:
         
         ttk.Checkbutton(frame_agregar, text="Vehículo de Respaldo", variable=self.es_respaldo).grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="w")
         
-        # Botón
+        # botón
         ttk.Button(frame_agregar, text="Agregar Vehículo", 
                   command=self.agregar_vehiculo).grid(row=3, column=2, columnspan=2, padx=5, pady=5)
         
-        # Frame para lista de vehículos
+        # frame para lista de vehículos
         frame_lista = ttk.LabelFrame(self.pestaña_vehiculos, text="Vehículos Disponibles")
         frame_lista.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Treeview para vehículos
+        # treeview para vehículos
         self.tree_vehiculos = ttk.Treeview(frame_lista, 
                                          columns=("nombre", "capacidad", "consumo", "tipo_combustible", "costo_combustible", "costo_mantenimiento"), 
                                          show="headings")
@@ -598,30 +598,30 @@ class InterfazAdmin:
         self.tree_vehiculos.heading("costo_mantenimiento", text="Costo Mantenimiento ($/km)")
         self.tree_vehiculos.pack(fill="both", expand=True, pady=5)
         
-        # Botón para actualizar lista
+        # botón para actualizar lista
         ttk.Button(frame_lista, text="Actualizar Lista", 
                   command=self.actualizar_lista_vehiculos).pack(pady=5)
         
-        # Inicializar lista
+        # inicializar lista
         self.actualizar_lista_vehiculos()
     
     def crear_pestaña_multas(self):
-        # Pestaña de multas
+        # pestaña de multas
         self.pestaña_multas = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_multas, text="Registro de Multas")
         
-        # Frame para agregar multa
+        # frame para agregar multa
         frame_agregar = ttk.LabelFrame(self.pestaña_multas, text="Registrar Multa")
         frame_agregar.pack(fill="x", padx=5, pady=5)
         
-        # Variables para formulario
+        # variables para formulario
         self.fecha_multa = tk.StringVar(value=datetime.now().strftime("%Y-%m-%d"))
         self.monto_multa = tk.DoubleVar()
         self.descripcion_multa = tk.StringVar()
         self.responsable_multa = tk.StringVar()
         self.vehiculo_multa = tk.StringVar()
         
-        # Campos del formulario
+        # campos del formulario
         ttk.Label(frame_agregar, text="Fecha:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         ttk.Entry(frame_agregar, textvariable=self.fecha_multa, width=15).grid(row=0, column=1, padx=5, pady=5, sticky="w")
         
@@ -641,15 +641,15 @@ class InterfazAdmin:
         ttk.Combobox(frame_agregar, textvariable=self.vehiculo_multa, 
                     values=list(VEHICULOS_DISPONIBLES.keys())).grid(row=2, column=3, padx=5, pady=5)
         
-        # Botón
+        # botón
         ttk.Button(frame_agregar, text="Registrar Multa", 
                   command=self.registrar_multa).grid(row=3, column=0, columnspan=4, padx=5, pady=5)
         
-        # Frame para lista de multas
+        # frame para lista de multas
         frame_lista = ttk.LabelFrame(self.pestaña_multas, text="Historial de Multas")
         frame_lista.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Treeview para multas
+        # treeview para multas
         self.tree_multas = ttk.Treeview(frame_lista, 
                                       columns=("fecha", "monto", "descripcion", "responsable", "vehiculo"), 
                                       show="headings")
@@ -660,19 +660,19 @@ class InterfazAdmin:
         self.tree_multas.heading("vehiculo", text="Vehículo")
         self.tree_multas.pack(fill="both", expand=True, pady=5)
         
-        # Botón para actualizar lista
+        # botón para actualizar lista
         ttk.Button(frame_lista, text="Actualizar Lista", 
                   command=self.actualizar_lista_multas).pack(pady=5)
         
-        # Inicializar lista
+        # inicializar lista
         self.actualizar_lista_multas()
     
     def crear_pestaña_reportes(self):
-        # Pestaña de reportes
+        # pestaña de reportes
         self.pestaña_reportes = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_reportes, text="Reportes de Gastos")
         
-        # Frame para generar reportes
+        # frame para generar reportes
         frame_generar = ttk.LabelFrame(self.pestaña_reportes, text="Generar Reporte")
         frame_generar.pack(fill="x", padx=5, pady=5)
         
@@ -693,7 +693,7 @@ class InterfazAdmin:
         ttk.Button(frame_generar, text="Generar Reporte", 
                   command=self.generar_reporte).pack(side="left", padx=5)
         
-        # Frame para mostrar reporte
+        # frame para mostrar reporte
         frame_reporte = ttk.LabelFrame(self.pestaña_reportes, text="Reporte")
         frame_reporte.pack(fill="both", expand=True, padx=5, pady=5)
         
@@ -704,7 +704,7 @@ class InterfazAdmin:
         self.texto_reporte.pack(side="left", fill="both", expand=True, padx=5, pady=5)
         scrollbar.pack(side="right", fill="y", pady=5)
     
-    # Métodos para gestión de productos
+    # métodos para gestión de productos
     def agregar_producto(self):
         try:
             if not all([self.nombre_producto.get(), self.precio_producto.get(), 
@@ -726,7 +726,7 @@ class InterfazAdmin:
             self.guardar_datos()
             self.actualizar_lista_productos()
             
-            # Limpiar campos
+            # limpiar campos
             self.limpiar_campos_producto()
             
             messagebox.showinfo("Éxito", "Producto agregado correctamente")
@@ -744,7 +744,7 @@ class InterfazAdmin:
             valores = self.tree_productos.item(seleccion[0])["values"]
             nombre = valores[0]
             
-            # Encontrar producto
+            # encontrar producto
             producto = next((p for p in self.productos if p.get("nombre", "") == nombre), None)
             if producto:
                 self.nombre_producto.set(producto.get("nombre", ""))
@@ -774,7 +774,7 @@ class InterfazAdmin:
                 messagebox.showerror("Error", "Por favor complete todos los campos obligatorios")
                 return
             
-            # Actualizar el producto que se está editando
+            # actualizar el producto que se está editando
             self.producto_editando["nombre"] = self.nombre_producto.get()
             self.producto_editando["categoria"] = self.categoria_producto.get()
             self.producto_editando["precio"] = self.precio_producto.get()
@@ -786,7 +786,7 @@ class InterfazAdmin:
             self.guardar_datos()
             self.actualizar_lista_productos()
             
-            # Limpiar campos y modo edición
+            # limpiar campos y modo edición
             self.limpiar_campos_producto()
             self.producto_editando = None
             
@@ -796,13 +796,13 @@ class InterfazAdmin:
             messagebox.showerror("Error", f"Error al actualizar producto: {str(e)}")
     
     def cancelar_edicion(self):
-        """Función para cancelar la edición y limpiar campos"""
+        ### función para cancelar la edición y limpiar campos
         self.limpiar_campos_producto()
         self.producto_editando = None
         messagebox.showinfo("Información", "Edición cancelada")
     
     def limpiar_campos_producto(self):
-        """Función para limpiar todos los campos del formulario de productos"""
+        ### función para limpiar todos los campos del formulario de productos
         self.nombre_producto.set("")
         self.categoria_producto.set("alimentos")
         self.precio_producto.set(0)
@@ -816,7 +816,7 @@ class InterfazAdmin:
             self.tree_productos.delete(item)
         
         for producto in self.productos:
-            # Usar get() para campos que pueden no existir
+            # usar get() para campos que pueden no existir
             self.tree_productos.insert("", "end", values=(
                 producto.get("nombre", ""),
                 producto.get("categoria", "otros"),
@@ -827,13 +827,13 @@ class InterfazAdmin:
                 "Sí" if producto.get("marca_propia", False) else "No"
             ))
     
-    # Métodos para estadísticas
+    # métodos para estadísticas
     def generar_estadisticas(self):
         try:
-            # Recargar pedidos para asegurar datos actualizados
+            # recargar pedidos para asegurar datos actualizados
             self.cargar_pedidos_recientes()
             
-            # Analizar pedidos para obtener estadísticas
+            # analizar pedidos para obtener estadísticas
             productos_vendidos = {}
             
             for pedido in PEDIDOS:
@@ -845,20 +845,20 @@ class InterfazAdmin:
                     else:
                         productos_vendidos[nombre] = cantidad
             
-            # Ordenar por cantidad vendida
+            # ordenar por cantidad vendida
             productos_ordenados = sorted(productos_vendidos.items(), key=lambda x: x[1], reverse=True)
             
             if productos_ordenados:
-                # Gráfico de barras
+                # gráfico de barras
                 self.ax1.clear()
-                nombres = [p[0] for p in productos_ordenados[:10]]  # Top 10
+                nombres = [p[0] for p in productos_ordenados[:10]]  # top 10
                 cantidades = [p[1] for p in productos_ordenados[:10]]
                 self.ax1.bar(nombres, cantidades)
                 self.ax1.set_title("Productos Más Vendidos")
                 self.ax1.set_ylabel("Cantidad Vendida")
                 self.ax1.tick_params(axis='x', rotation=45)
                 
-                # Gráfico de torta para categorías
+                # gráfico de torta para categorías
                 self.ax2.clear()
                 categorias = {}
                 for producto in self.productos:
@@ -874,7 +874,7 @@ class InterfazAdmin:
                 
                 self.canvas.draw()
                 
-                # Texto de estadísticas
+                # texto de estadísticas
                 self.texto_estadisticas.delete(1.0, tk.END)
                 self.texto_estadisticas.insert(tk.END, f"ESTADÍSTICAS DE VENTAS - {self.periodo_estadisticas.get().upper()}\n")
                 self.texto_estadisticas.insert(tk.END, "=" * 50 + "\n\n")
@@ -898,14 +898,14 @@ class InterfazAdmin:
             messagebox.showerror("Error", f"Error al generar estadísticas: {str(e)}")
     
     def cargar_pedidos_recientes(self):
-        """Función para recargar solo los pedidos desde el archivo"""
+        ### función para recargar solo los pedidos desde el archivo
         if os.path.exists(self.pedidos_file):
             try:
                 with open(self.pedidos_file, 'r', encoding='utf-8') as f:
                     contenido = f.read().strip()
                     if contenido:
                         pedidos_data = json.loads(contenido)
-                        PEDIDOS.clear()  # Limpiar lista actual
+                        PEDIDOS.clear()  # limpiar lista actual
                         for pedido_dict in pedidos_data:
                             pedido = Pedido(
                                 id=pedido_dict["id"],
@@ -925,7 +925,7 @@ class InterfazAdmin:
         else:
             PEDIDOS.clear()
     
-    # Métodos para gestión de vehículos
+    # métodos para gestión de vehículos
     def agregar_vehiculo(self):
         try:
             if not all([self.nombre_vehiculo.get(), self.capacidad_vehiculo.get(),
@@ -946,7 +946,7 @@ class InterfazAdmin:
             clave = self.nombre_vehiculo.get().lower().replace(" ", "_")
             VEHICULOS_DISPONIBLES[clave] = nuevo_vehiculo
             
-            # Limpiar campos
+            # limpiar campos
             self.nombre_vehiculo.set("")
             self.capacidad_vehiculo.set(0)
             self.consumo_vehiculo.set(0)
@@ -975,7 +975,7 @@ class InterfazAdmin:
                 vehiculo.costo_mantenimiento_por_km
             ))
     
-    # Métodos para gestión de multas
+    # métodos para gestión de multas
     def registrar_multa(self):
         try:
             if not all([self.fecha_multa.get(), self.monto_multa.get(),
@@ -995,7 +995,7 @@ class InterfazAdmin:
             self.guardar_datos()
             self.actualizar_lista_multas()
             
-            # Limpiar campos
+            # limpiar campos
             self.fecha_multa.set(datetime.now().strftime("%Y-%m-%d"))
             self.monto_multa.set(0)
             self.descripcion_multa.set("")
@@ -1020,7 +1020,7 @@ class InterfazAdmin:
                 multa["vehiculo"]
             ))
     
-    # Métodos para reportes
+    # métodos para reportes
     def generar_reporte(self):
         try:
             self.texto_reporte.delete(1.0, tk.END)
@@ -1084,38 +1084,38 @@ class InterfazAdmin:
     def generar_reporte_gastos_logisticos(self, fecha_inicio, fecha_fin):
         self.texto_reporte.insert(tk.END, "REPORTE DE GASTOS LOGÍSTICOS\n\n")
         
-        # Gastos de combustible
+        # gastos de combustible
         self.texto_reporte.insert(tk.END, "GASTOS DE COMBUSTIBLE:\n")
         for vehiculo in VEHICULOS_DISPONIBLES.values():
             self.texto_reporte.insert(tk.END, f"• {vehiculo.nombre}: ${vehiculo.costo_combustible_por_litro:,.2f}/L\n")
         
-        # Gastos de mantenimiento
+        # gastos de mantenimiento
         self.texto_reporte.insert(tk.END, "\nGASTOS DE MANTENIMIENTO:\n")
         for vehiculo in VEHICULOS_DISPONIBLES.values():
             self.texto_reporte.insert(tk.END, f"• {vehiculo.nombre}: ${vehiculo.costo_mantenimiento_por_km:,.2f}/km\n")
         
-        # Multas
+        # multas
         multas_periodo = [m for m in self.multas if fecha_inicio <= datetime.strptime(m["fecha"], "%Y-%m-%d") <= fecha_fin]
         if multas_periodo:
             total_multas = sum(m["monto"] for m in multas_periodo)
             self.texto_reporte.insert(tk.END, f"\nMULTAS EN EL PERÍODO: ${total_multas:,.2f}\n")
         
-        # Resumen
+        # resumen
         self.texto_reporte.insert(tk.END, "\nRESUMEN:\n")
         self.texto_reporte.insert(tk.END, f"• Vehículos registrados: {len(VEHICULOS_DISPONIBLES)}\n")
         self.texto_reporte.insert(tk.END, f"• Multas en período: {len(multas_periodo)}\n")
         self.texto_reporte.insert(tk.END, f"• Total multas: ${total_multas if multas_periodo else 0:,.2f}\n")
 
     def actualizar_listas_pedidos(self):
-        """Actualiza las listas de pedidos en curso y completados"""
-        # Limpiar listas
+        ### actualiza las listas de pedidos en curso y completados
+        # limpiar listas
         for item in self.tree_pedidos_curso.get_children():
             self.tree_pedidos_curso.delete(item)
         
         for item in self.tree_pedidos_completados.get_children():
             self.tree_pedidos_completados.delete(item)
         
-        # Agregar pedidos en curso
+        # agregar pedidos en curso
         for pedido in PEDIDOS:
             if pedido.estado == "en_proceso":
                 self.tree_pedidos_curso.insert("", "end", values=(
@@ -1126,7 +1126,7 @@ class InterfazAdmin:
                     pedido.fecha_creacion.strftime("%d/%m/%Y %H:%M") if pedido.fecha_creacion else "N/A"
                 ))
         
-        # Agregar pedidos completados
+        # agregar pedidos completados
         for pedido in PEDIDOS:
             if pedido.estado == "completado":
                 self.tree_pedidos_completados.insert("", "end", values=(
@@ -1143,20 +1143,20 @@ class InterfazAdmin:
             self.parent.deiconify()
 
     def logout_admin(self):
-        """Cierra sesión y vuelve a la pantalla de login"""
-        # Limpiar ventana
+        ### cierra sesión y vuelve a la pantalla de login
+        # limpiar ventana
         for widget in self.root.winfo_children():
             widget.destroy()
         
-        # Volver a la configuración de login
+        # volver a la configuración de login
         self.root.title("Panel de Administración - Login")
         self.root.geometry("600x400")
         self.root.resizable(False, False)
         
-        # Centrar ventana
+        # centrar ventana
         self.centrar_ventana()
         
-        # Crear interfaz de login
+        # crear interfaz de login
         self.crear_interfaz_login()
 
     def actualizar_combobox_responsables(self):
@@ -1164,7 +1164,7 @@ class InterfazAdmin:
             self.combo_responsable_multa['values'] = [c["nombre"] for c in cargar_conductores()]
 
     def on_tab_changed(self, event):
-        if self.notebook.index(self.notebook.select()) == 4:  # Verifica si se ha cambiado a la pestaña de multas
+        if self.notebook.index(self.notebook.select()) == 4:  # verifica si se ha cambiado a la pestaña de multas
             self.actualizar_combobox_responsables()
 
     def agregar_conductor(self):
@@ -1173,15 +1173,15 @@ class InterfazAdmin:
                 messagebox.showerror("Error", "Por favor complete todos los campos")
                 return
             
-            # Cargar conductores existentes
+            # cargar conductores existentes
             conductores = cargar_conductores()
             
-            # Verificar si ya existe un conductor con esa cédula
+            # verificar si ya existe un conductor con esa cédula
             if any(c.get("dni") == self.dni_conductor.get() for c in conductores):
                 messagebox.showerror("Error", "Ya existe un conductor con esa cédula")
                 return
             
-            # Crear nuevo conductor
+            # crear nuevo conductor
             nuevo_conductor = {
                 "nombre": self.nombre_conductor.get(),
                 "dni": self.dni_conductor.get(),
@@ -1195,10 +1195,10 @@ class InterfazAdmin:
             conductores.append(nuevo_conductor)
             guardar_conductores(conductores)
             
-            # Limpiar campos
+            # limpiar campos
             self.limpiar_campos_conductor()
             
-            # Actualizar lista
+            # actualizar lista
             self.actualizar_lista_conductores()
             
             messagebox.showinfo("Éxito", "Conductor agregado correctamente")
@@ -1216,7 +1216,7 @@ class InterfazAdmin:
             valores = self.tree_conductores.item(seleccion[0])["values"]
             nombre = valores[0]
             
-            # Cargar conductores y encontrar el seleccionado
+            # cargar conductores y encontrar el seleccionado
             conductores = cargar_conductores()
             conductor = next((c for c in conductores if c.get("nombre") == nombre), None)
             
@@ -1246,16 +1246,16 @@ class InterfazAdmin:
                 messagebox.showerror("Error", "Por favor complete todos los campos")
                 return
             
-            # Cargar conductores
+            # cargar conductores
             conductores = cargar_conductores()
             
-            # Verificar si el DNI ya existe en otro conductor
+            # verificar si el DNI ya existe en otro conductor
             for c in conductores:
                 if c != self.conductor_editando and c.get("dni") == self.dni_conductor.get():
                     messagebox.showerror("Error", "Ya existe otro conductor con ese DNI")
                     return
             
-            # Actualizar el conductor
+            # actualizar el conductor
             self.conductor_editando["nombre"] = self.nombre_conductor.get()
             self.conductor_editando["dni"] = self.dni_conductor.get()
             self.conductor_editando["telefono"] = self.telefono_conductor.get()
@@ -1265,11 +1265,11 @@ class InterfazAdmin:
             
             guardar_conductores(conductores)
             
-            # Limpiar campos y modo edición
+            # limpiar campos y modo edición
             self.limpiar_campos_conductor()
             self.conductor_editando = None
             
-            # Actualizar lista
+            # actualizar lista
             self.actualizar_lista_conductores()
             
             messagebox.showinfo("Éxito", "Conductor actualizado correctamente")
@@ -1291,26 +1291,26 @@ class InterfazAdmin:
         self.password_conductor.set("")
     
     def actualizar_lista_conductores(self):
-        # Limpiar lista actual
+        # limpiar lista actual
         for item in self.tree_conductores.get_children():
             self.tree_conductores.delete(item)
         
-        # Cargar la lista de conductores desde el JSON
+        # cargar la lista de conductores desde el json
         conductores = cargar_conductores()
         
-        # Verificar qué conductores están ocupados basado en pedidos en proceso
+        # verificar qué conductores están ocupados basado en pedidos en proceso
         for pedido in PEDIDOS:
             if pedido.estado == "en_proceso" and pedido.conductor:
                 for conductor in conductores:
                     if conductor["nombre"] == pedido.conductor:
                         conductor["estado"] = "ocupado"
         
-        # Guardar cambios de estado
+        # guardar cambios de estado
         guardar_conductores(conductores)
         
-        # Agregar conductores a la lista
+        # agregar conductores a la lista
         for conductor in conductores:
-            # Buscar pedido actual del conductor
+            # buscar pedido actual del conductor
             pedido_actual = next((p for p in PEDIDOS if p.conductor == conductor["nombre"] and p.estado == "en_proceso"), None)
             pedido_info = f"#{pedido_actual.id}" if pedido_actual else "Sin pedido"
             
@@ -1322,46 +1322,46 @@ class InterfazAdmin:
             ))
     
     def asignar_pedido_conductor(self):
-        # Obtener pedido seleccionado
+        # obtener pedido seleccionado
         seleccion_pedido = self.tree_pedidos_disponibles.selection()
         if not seleccion_pedido:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
             return
         
-        # Obtener conductor seleccionado
+        # obtener conductor seleccionado
         seleccion_conductor = self.tree_conductores.selection()
         if not seleccion_conductor:
             messagebox.showwarning("Advertencia", "Por favor seleccione un conductor")
             return
         
         try:
-            # Obtener ID del pedido
+            # obtener id del pedido
             valores_pedido = self.tree_pedidos_disponibles.item(seleccion_pedido[0])["values"]
             id_pedido = valores_pedido[0]
             
-            # Obtener nombre del conductor
+            # obtener nombre del conductor
             valores_conductor = self.tree_conductores.item(seleccion_conductor[0])["values"]
             nombre_conductor = valores_conductor[0]
             
-            # Verificar que el conductor esté disponible
+            # verificar que el conductor esté disponible
             if valores_conductor[2] == "ocupado":
                 messagebox.showerror("Error", "Este conductor ya tiene un pedido asignado")
                 return
             
-            # Encontrar pedido
+            # encontrar pedido
             pedido = next((p for p in PEDIDOS if p.id == id_pedido), None)
             if not pedido:
                 messagebox.showerror("Error", "Pedido no encontrado")
                 return
             
-            # Asignar pedido al conductor
+            # asignar pedido al conductor
             pedido.estado = "en_proceso"
             pedido.conductor = nombre_conductor
             
-            # Guardar cambios
+            # guardar cambios
             self.guardar_pedidos()
             
-            # Actualizar listas
+            # actualizar listas
             self.actualizar_lista_conductores()
             self.actualizar_lista_pedidos_disponibles()
             self.actualizar_listas_pedidos()
@@ -1372,7 +1372,7 @@ class InterfazAdmin:
             messagebox.showerror("Error", f"Error al asignar pedido: {str(e)}")
     
     def marcar_pedido_terminado_admin(self):
-        # Obtener pedido seleccionado de la lista de pedidos en curso
+        # obtener pedido seleccionado de la lista de pedidos en curso
         seleccion = self.tree_pedidos_curso.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido en curso")
@@ -1382,20 +1382,20 @@ class InterfazAdmin:
             valores = self.tree_pedidos_curso.item(seleccion[0])["values"]
             id_pedido = valores[0]
             
-            # Encontrar pedido
+            # encontrar pedido
             pedido = next((p for p in PEDIDOS if p.id == id_pedido), None)
             if not pedido:
                 messagebox.showerror("Error", "Pedido no encontrado")
                 return
             
-            # Marcar como terminado
+            # marcar como terminado
             pedido.estado = "completado"
             pedido.conductor = None
             
-            # Guardar cambios
+            # guardar cambios
             self.guardar_pedidos()
             
-            # Actualizar listas
+            # actualizar listas
             self.actualizar_lista_conductores()
             self.actualizar_listas_pedidos()
             
@@ -1405,15 +1405,15 @@ class InterfazAdmin:
             messagebox.showerror("Error", f"Error al marcar pedido como terminado: {str(e)}")
     
     def actualizar_listas_admin(self):
-        """Actualiza todas las listas de la pestaña de conductores"""
+        ### actualiza todas las listas de la pestaña de conductores
         self.actualizar_lista_conductores()
         self.actualizar_lista_pedidos_disponibles()
         self.actualizar_listas_pedidos()
     
     def guardar_pedidos(self):
-        """Guarda los pedidos en el archivo JSON"""
+        ### guarda los pedidos en el archivo json
         try:
-            # Convertir pedidos a formato JSON
+            # convertir pedidos a formato json
             pedidos_data = []
             for pedido in PEDIDOS:
                 pedido_dict = {
@@ -1427,7 +1427,7 @@ class InterfazAdmin:
                 }
                 pedidos_data.append(pedido_dict)
             
-            # Guardar en archivo
+            # guardar en archivo
             with open("data/pedidos.json", "w", encoding="utf-8") as f:
                 json.dump(pedidos_data, f, indent=4, ensure_ascii=False)
                 
@@ -1435,12 +1435,12 @@ class InterfazAdmin:
             messagebox.showerror("Error", f"Error al guardar pedidos: {str(e)}")
 
     def actualizar_lista_pedidos_disponibles(self):
-        """Actualiza la lista de pedidos disponibles"""
-        # Limpiar lista actual
+        ### actualiza la lista de pedidos disponibles
+        # limpiar lista actual
         for item in self.tree_pedidos_disponibles.get_children():
             self.tree_pedidos_disponibles.delete(item)
         
-        # Agregar pedidos pendientes
+        # agregar pedidos pendientes
         for pedido in PEDIDOS:
             if pedido.estado == "pendiente":
                 self.tree_pedidos_disponibles.insert("", "end", values=(

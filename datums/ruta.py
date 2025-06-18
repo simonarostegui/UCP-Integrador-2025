@@ -21,7 +21,7 @@ class Ruta:
     
     @staticmethod
     def calcular_distancia(punto1: PuntoRuta, punto2: PuntoRuta) -> float:
-        #calcula la distancia entre dos puntos usando la fórmula de Haversine
+        # calcula la distancia entre dos puntos usando la fórmula de haversine
         R = 6371  # radio de la tierra en kilometros
         
         lat1, lon1 = math.radians(punto1.latitud), math.radians(punto1.longitud)

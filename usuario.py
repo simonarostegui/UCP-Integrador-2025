@@ -14,19 +14,19 @@ class InterfazUsuario:
         self.root.geometry("1200x800")
         self.root.protocol("WM_DELETE_WINDOW", self.cerrar_usuario)
         
-        # Variables de datos
+        # variables de datos
         self.data_dir = "data"
         self.productos_file = os.path.join(self.data_dir, "productos.json")
         self.pedidos_file = os.path.join(self.data_dir, "pedidos.json")
         
-        # Variables del carrito
+        # variables del carrito
         self.carrito = []
         self.total_carrito = tk.StringVar(value="$0")
         
-        # Cargar datos
+        # cargar datos
         self.cargar_datos_local()
         
-        # Crear interfaz
+        # crear interfaz
         self.crear_interfaz()
     
     def cerrar_usuario(self):
@@ -35,12 +35,12 @@ class InterfazUsuario:
             self.parent.deiconify()
     
     def cargar_datos_local(self):
-        # Cargar o inicializar productos
+        # cargar o inicializar productos
         if os.path.exists(self.productos_file):
             with open(self.productos_file, 'r', encoding='utf-8') as f:
                 self.productos = json.load(f)
         else:
-            # Productos de ejemplo
+            # productos de ejemplo, si no no anda
             self.productos = [
                 {"nombre": "Jabón líquido", "precio": 1200, "peso": 0.5, "stock": 95},
                 {"nombre": "Shampoo", "precio": 1500, "peso": 0.5, "stock": 94},
@@ -55,14 +55,14 @@ class InterfazUsuario:
             ]
             self.guardar_datos_local()
         
-        # Cargar pedidos existentes
+        # cargar pedidos existentes
         if os.path.exists(self.pedidos_file):
             try:
                 with open(self.pedidos_file, 'r', encoding='utf-8') as f:
                     contenido = f.read().strip()
-                    if contenido:  # Verificar que el archivo no esté vacío
+                    if contenido:  # verificar que el archivo no esté vacío
                         pedidos_data = json.loads(contenido)
-                        PEDIDOS.clear()  # Limpiar lista actual
+                        PEDIDOS.clear()  # limpiar lista actual
                         for pedido_dict in pedidos_data:
                             pedido = Pedido(
                                 id=pedido_dict["id"],
@@ -76,21 +76,21 @@ class InterfazUsuario:
                                 pedido.fecha_creacion = datetime.fromisoformat(pedido_dict["fecha_creacion"])
                             PEDIDOS.append(pedido)
                     else:
-                        # Archivo vacío, inicializar lista vacía
+                        # archivo vacío, inicializar lista vacía
                         PEDIDOS.clear()
             except (json.JSONDecodeError, FileNotFoundError):
-                # Si hay error al leer JSON, inicializar lista vacía
+                # si hay error al leer json, inicializar lista vacía
                 PEDIDOS.clear()
         else:
-            # Archivo no existe, inicializar lista vacía
+            # archivo no existe, inicializar lista vacía
             PEDIDOS.clear()
     
     def guardar_datos_local(self):
-        # Guardar productos
+        # guardar productos
         with open(self.productos_file, 'w', encoding='utf-8') as f:
             json.dump(self.productos, f, ensure_ascii=False, indent=4)
         
-        # Guardar pedidos
+        # guardar pedidos
         pedidos_data = []
         for pedido in PEDIDOS:
             pedido_dict = {
@@ -109,14 +109,14 @@ class InterfazUsuario:
     
     def inicializar_productos(self):
         productos_iniciales = [
-            # Productos de higiene
+            # productos de higiene
             {"nombre": "Jabón líquido", "categoria": "higiene", "precio": 1200, "peso": 0.5, "stock": 100},
             {"nombre": "Shampoo", "categoria": "higiene", "precio": 1500, "peso": 0.5, "stock": 100},
             {"nombre": "Papel higiénico", "categoria": "higiene", "precio": 800, "peso": 1.0, "stock": 200},
             {"nombre": "Detergente", "categoria": "higiene", "precio": 2000, "peso": 2.0, "stock": 50},
             {"nombre": "Limpia pisos", "categoria": "higiene", "precio": 1800, "peso": 1.5, "stock": 50},
             
-            # Productos alimenticios
+            # productos alimenticios
             {"nombre": "Arroz", "categoria": "alimentos", "precio": 1500, "peso": 1.0, "stock": 100},
             {"nombre": "Fideos", "categoria": "alimentos", "precio": 800, "peso": 0.5, "stock": 150},
             {"nombre": "Aceite", "categoria": "alimentos", "precio": 2500, "peso": 1.0, "stock": 80},
@@ -124,39 +124,39 @@ class InterfazUsuario:
             {"nombre": "Harina", "categoria": "alimentos", "precio": 1000, "peso": 1.0, "stock": 120}
         ]
         
-        # Guardar productos iniciales
+        # guardar productos iniciales
         with open(self.productos_file, 'w', encoding='utf-8') as f:
             json.dump(productos_iniciales, f, ensure_ascii=False, indent=2)
         
         return productos_iniciales
     
     def crear_interfaz(self):
-        # Frame principal
+        # frame principal
         self.marco_principal = ttk.Frame(self.root)
         self.marco_principal.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Notebook para pestañas
+        # notebook para pestañas
         self.notebook = ttk.Notebook(self.marco_principal)
         self.notebook.pack(fill="both", expand=True)
         
-        # Pestaña de productos
+        # pestaña de productos
         self.pestaña_productos = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_productos, text="Productos")
         
-        # Pestaña de carrito
+        # pestaña de carrito
         self.pestaña_carrito = ttk.Frame(self.notebook)
         self.notebook.add(self.pestaña_carrito, text="Carrito")
         
-        # Crear contenido de las pestañas
+        # crear contenido de las pestañas
         self.crear_pestaña_productos()
         self.crear_pestaña_carrito()
     
     def crear_pestaña_productos(self):
-        # Frame para filtros
+        # frame para filtros
         frame_filtros = ttk.LabelFrame(self.pestaña_productos, text="Filtros")
         frame_filtros.pack(fill="x", padx=5, pady=5)
         
-        # Categoría
+        # categoría
         ttk.Label(frame_filtros, text="Categoría:").pack(side="left", padx=5)
         self.categoria_var = tk.StringVar(value="todos")
         combo_categoria = ttk.Combobox(frame_filtros, textvariable=self.categoria_var, 
@@ -164,11 +164,11 @@ class InterfazUsuario:
         combo_categoria.pack(side="left", padx=5)
         combo_categoria.bind("<<ComboboxSelected>>", self.actualizar_lista_productos)
         
-        # Frame para lista de productos
+        # frame para lista de productos
         frame_lista = ttk.Frame(self.pestaña_productos)
         frame_lista.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Treeview para productos
+        # treeview para productos
         self.tree_productos = ttk.Treeview(frame_lista, 
                                          columns=("nombre", "precio", "peso", "stock"), 
                                          show="headings")
@@ -178,25 +178,25 @@ class InterfazUsuario:
         self.tree_productos.heading("stock", text="Stock")
         self.tree_productos.pack(side="left", fill="both", expand=True)
         
-        # Scrollbar
+        # scrollbar
         scrollbar = ttk.Scrollbar(frame_lista, orient="vertical", 
                                 command=self.tree_productos.yview)
         scrollbar.pack(side="right", fill="y")
         self.tree_productos.configure(yscrollcommand=scrollbar.set)
         
-        # Botón agregar al carrito
+        # botón agregar al carrito
         ttk.Button(self.pestaña_productos, text="Agregar al Carrito", 
                   command=self.agregar_al_carrito).pack(pady=10)
         
-        # Inicializar lista de productos
+        # inicializar lista de productos
         self.actualizar_lista_productos()
     
     def crear_pestaña_carrito(self):
-        # Frame para lista del carrito
+        # frame para lista del carrito
         frame_carrito = ttk.Frame(self.pestaña_carrito)
         frame_carrito.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Treeview para carrito
+        # treeview para carrito
         self.tree_carrito = ttk.Treeview(frame_carrito, 
                                        columns=("nombre", "precio", "cantidad", "subtotal"),
                                        show="headings")
@@ -206,40 +206,40 @@ class InterfazUsuario:
         self.tree_carrito.heading("subtotal", text="Subtotal ($)")
         self.tree_carrito.pack(side="left", fill="both", expand=True)
         
-        # Scrollbar
+        # scrollbar
         scrollbar = ttk.Scrollbar(frame_carrito, orient="vertical", 
                                 command=self.tree_carrito.yview)
         scrollbar.pack(side="right", fill="y")
         self.tree_carrito.configure(yscrollcommand=scrollbar.set)
         
-        # Frame para total y botones
+        # frame para total y botones
         frame_total = ttk.Frame(self.pestaña_carrito)
         frame_total.pack(fill="x", padx=5, pady=5)
         
         ttk.Label(frame_total, text="Total:").pack(side="left", padx=5)
         ttk.Label(frame_total, textvariable=self.total_carrito).pack(side="left", padx=5)
         
-        # Botones
+        # botones
         ttk.Button(frame_total, text="Eliminar del Carrito", 
                   command=self.eliminar_del_carrito).pack(side="right", padx=5)
         ttk.Button(frame_total, text="Finalizar Compra", 
                   command=self.finalizar_compra).pack(side="right", padx=5)
     
     def actualizar_lista_productos(self, event=None):
-        # Limpiar lista actual
+        # limpiar lista actual
         for item in self.tree_productos.get_children():
             self.tree_productos.delete(item)
         
-        # Obtener filtro de categoría
+        # obtener filtro de categoría
         categoria = self.categoria_var.get()
         
         try:
-            # Filtrar productos locales
+            # filtrar productos locales
             productos = self.productos if categoria == "todos" else [
                 p for p in self.productos if p["categoria"] == categoria
             ]
             
-            # Agregar productos a la lista
+            # agregar productos a la lista
             for producto in productos:
                 self.tree_productos.insert("", "end",
                                          values=(producto["nombre"], producto["precio"], 
@@ -249,30 +249,30 @@ class InterfazUsuario:
             messagebox.showerror("Error", "Error al cargar los productos")
     
     def agregar_al_carrito(self):
-        # Obtener producto seleccionado
+        # obtener producto seleccionado
         seleccion = self.tree_productos.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un producto")
             return
         
-        # Obtener datos del producto
+        # obtener datos del producto
         valores = self.tree_productos.item(seleccion[0])["values"]
         nombre = valores[0]
         precio = float(valores[1])
         
-        # Encontrar producto en la lista
+        # encontrar producto en la lista
         producto = next((p for p in self.productos if p["nombre"] == nombre), None)
         if not producto or producto["stock"] <= 0:
             messagebox.showwarning("Advertencia", "No hay stock disponible")
             return
         
-        # Pedir cantidad
+        # pedir cantidad
         cantidad = simpledialog.askinteger("Cantidad", 
             f"Ingrese la cantidad de {nombre}:",
             minvalue=1, maxvalue=producto["stock"])
         
         if cantidad:
-            # Agregar al carrito
+            # agregar al carrito
             self.carrito.append({
                 "nombre": nombre,
                 "precio": precio,
@@ -280,39 +280,39 @@ class InterfazUsuario:
                 "subtotal": precio * cantidad
             })
             
-            # Actualizar lista del carrito
+            # actualizar lista del carrito
             self.actualizar_carrito()
     
     def actualizar_carrito(self):
-        # Limpiar lista actual
+        # limpiar lista actual
         for item in self.tree_carrito.get_children():
             self.tree_carrito.delete(item)
         
-        # Calcular total
+        # calcular total
         total = 0
         
-        # Agregar items al carrito
+        # agregar items al carrito
         for item in self.carrito:
             self.tree_carrito.insert("", "end",
                                    values=(item["nombre"], item["precio"], 
                                           item["cantidad"], item["subtotal"]))
             total += item["subtotal"]
         
-        # Actualizar total
+        # actualizar total
         self.total_carrito.set(f"${total:.2f}")
     
     def eliminar_del_carrito(self):
-        # Obtener selección
+        # obtener selección
         seleccion = self.tree_carrito.selection()
         if not seleccion:
             messagebox.showwarning("Advertencia", "Por favor seleccione un item")
             return
         
-        # Eliminar del carrito
+        # eliminar del carrito
         nombre = self.tree_carrito.item(seleccion[0])["text"]
         self.carrito = [item for item in self.carrito if item["nombre"] != nombre]
         
-        # Actualizar carrito
+        # actualizar carrito
         self.actualizar_carrito()
     
     def finalizar_compra(self):
@@ -320,21 +320,21 @@ class InterfazUsuario:
             messagebox.showwarning("Advertencia", "El carrito está vacío")
             return
         
-        # Pedir nombre del usuario
+        # pedir nombre del usuario
         nombre_usuario = simpledialog.askstring("Datos de Usuario", 
             "Ingrese su nombre:")
         
         if not nombre_usuario:
             return
         
-        # Pedir dirección de entrega
+        # pedir dirección de entrega
         direccion = simpledialog.askstring("Dirección de Entrega", 
             "Ingrese la dirección de entrega:")
         
         if not direccion:
             return
         
-        # Crear nuevo pedido
+        # crear nuevo pedido
         nuevo_pedido = Pedido(
             id=len(PEDIDOS) + 1,
             usuario=nombre_usuario,
@@ -342,13 +342,13 @@ class InterfazUsuario:
             direccion_destino=direccion
         )
         
-        # Agregar a la lista de pedidos
+        # agregar a la lista de pedidos
         PEDIDOS.append(nuevo_pedido)
         
-        # Guardar pedidos en archivo
+        # guardar pedidos en archivo
         self.guardar_datos_local()
         
-        # Limpiar carrito
+        # limpiar carrito
         self.carrito = []
         self.actualizar_carrito()
         
