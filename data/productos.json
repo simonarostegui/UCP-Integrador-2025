@@ -2,71 +2,91 @@
     {
         "nombre": "Jabón líquido",
         "categoria": "higiene",
-        "precio": 1200,
+        "precio": 1500.0,
         "peso": 0.5,
-        "stock": 95
+        "stock": 110,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Shampoo",
         "categoria": "higiene",
         "precio": 1500,
         "peso": 0.5,
-        "stock": 94
+        "stock": 94,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Papel higiénico",
         "categoria": "higiene",
         "precio": 800,
         "peso": 1.0,
-        "stock": 200
+        "stock": 200,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Detergente",
         "categoria": "higiene",
         "precio": 2000,
         "peso": 2.0,
-        "stock": 50
+        "stock": 50,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Limpia pisos",
         "categoria": "higiene",
         "precio": 1800,
         "peso": 1.5,
-        "stock": 50
+        "stock": 50,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Arroz",
         "categoria": "alimentos",
         "precio": 1500,
         "peso": 1.0,
-        "stock": 100
+        "stock": 100,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Fideos",
         "categoria": "alimentos",
         "precio": 800,
         "peso": 0.5,
-        "stock": 100
+        "stock": 100,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Aceite",
         "categoria": "alimentos",
         "precio": 2500,
         "peso": 1.0,
-        "stock": 80
+        "stock": 80,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Azúcar",
         "categoria": "alimentos",
         "precio": 1200,
         "peso": 1.0,
-        "stock": 40
+        "stock": 40,
+        "marca": "Sin marca",
+        "marca_propia": false
     },
     {
         "nombre": "Harina",
         "categoria": "alimentos",
         "precio": 1000,
         "peso": 1.0,
-        "stock": 120
+        "stock": 120,
+        "marca": "Sin marca",
+        "marca_propia": false
     }
 ]

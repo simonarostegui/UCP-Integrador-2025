@@ -7,7 +7,8 @@ dependencies = [
     "tkintermapview>=1.22",
     "geopy>=2.3.0",
     "requests>=2.0.0",
-    "googlemaps>=4.10.0"
+    "googlemaps>=4.10.0",
+    "matplotlib>=3.5.0"
 ]
 
 [build-system]

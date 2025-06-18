@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from logistica import CalculadoraLogistica
 from usuario import InterfazUsuario
+from admin import InterfazAdmin
 from tkintermapview import TkinterMapView
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
@@ -75,7 +76,13 @@ class LoginInterface:
         root.mainloop()
     
     def acceso_admin(self):
-        messagebox.showinfo("Acceso Admin", "Funcionalidad en desarrollo")
+        # Cerrar la ventana actual
+        self.root.destroy()
+        
+        # Crear nueva ventana para la interfaz de administrador
+        root = tk.Tk()
+        app = InterfazAdmin(root)
+        root.mainloop()
 
 
 if __name__ == "__main__":
