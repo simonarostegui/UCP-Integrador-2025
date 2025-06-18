@@ -26,7 +26,7 @@ class CalculadoraLogistica:
         
         # Configurar ventana
         self.root.title("Sistema de Logística - Login")
-        self.root.geometry("400x300")
+        self.root.geometry("600x400")  # Tamaño aumentado para mostrar todos los elementos
         self.root.resizable(False, False)
         
         # Centrar ventana
@@ -300,7 +300,7 @@ class CalculadoraLogistica:
         
         # Configurar ventana para login
         self.root.title("Sistema de Logística - Login")
-        self.root.geometry("400x300")
+        self.root.geometry("600x400")  # Tamaño aumentado para mostrar todos los elementos
         self.root.resizable(False, False)
         
         # Centrar ventana
@@ -418,6 +418,11 @@ class CalculadoraLogistica:
             messagebox.showwarning("Advertencia", "Por favor seleccione un pedido")
             return
         
+        # Verificar que hay un conductor logueado
+        if not self.conductor_actual:
+            messagebox.showerror("Error", "Debe iniciar sesión primero")
+            return
+        
         # Obtener ID del pedido
         pedido_id = int(self.tree_pedidos.item(seleccion[0])["values"][0])
         
@@ -427,10 +432,17 @@ class CalculadoraLogistica:
             messagebox.showerror("Error", "Pedido no encontrado")
             return
         
-        # Tomar pedido
-        if pedido.tomar_pedido(CONDUCTOR_PREDETERMINADO.nombre):
+        # Tomar pedido usando el conductor actual logueado
+        if pedido.tomar_pedido(self.conductor_actual["nombre"]):
+            # Cambiar estado del conductor a ocupado
+            conductores = cargar_conductores()
+            for c in conductores:
+                if c["nombre"] == self.conductor_actual["nombre"]:
+                    c["estado"] = "ocupado"
+            guardar_conductores(conductores)
+            
             self.guardar_pedidos()
-            messagebox.showinfo("Éxito", f"Pedido #{pedido_id} tomado exitosamente")
+            messagebox.showinfo("Éxito", f"Pedido #{pedido_id} tomado exitosamente por {self.conductor_actual['nombre']}")
             self.actualizar_lista_pedidos()
             self.actualizar_pedidos_conductor()
             

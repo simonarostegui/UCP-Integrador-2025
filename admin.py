@@ -23,7 +23,7 @@ class InterfazAdmin:
         
         # Configurar ventana inicial para login
         self.root.title("Panel de Administración - Login")
-        self.root.geometry("400x300")
+        self.root.geometry("600x400")
         self.root.resizable(False, False)
         self.root.protocol("WM_DELETE_WINDOW", self.cerrar_admin)
         
@@ -1150,7 +1150,7 @@ class InterfazAdmin:
         
         # Volver a la configuración de login
         self.root.title("Panel de Administración - Login")
-        self.root.geometry("400x300")
+        self.root.geometry("600x400")
         self.root.resizable(False, False)
         
         # Centrar ventana
