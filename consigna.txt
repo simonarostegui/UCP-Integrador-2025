@@ -25,3 +25,63 @@ considera previsibilidad).
 Hacer un código que me calcule la distancia y velocidad promedio, cantidad y costo de combustible.
 Piense en hacer una ecuación estableciendo puntos (coordenadas) de las ciudades más importantes
 por donde pasan, para poder resolver este tema.
+
+Lista de 20 requerimientos funcionales
+
+El sistema debe permitir la carga de productos sin marca específica.
+
+
+El sistema debe permitir crear productos de marca propia.
+
+
+El sistema debe permitir consultar estadísticas de ventas (lo más vendido y lo menos vendido).
+
+
+El sistema debe permitir registrar ingresos de mercadería.
+
+
+El sistema debe permitir consultar el historial de stock.
+
+
+El sistema debe permitir actualizar los precios de los productos.
+
+
+El sistema debe permitir agregar promociones.
+
+El sistema debe facilitar la facturación directa desde un único sistema sin depender de otra app.
+
+
+El sistema debe permitir registrar los puntos de carga de combustible.
+
+
+El sistema debe permitir registrar el consumo de combustible y su calidad.
+
+
+El sistema debe permitir planificar los pedidos desde el martes hasta el sábado.
+
+
+El sistema debe permitir cargar los pedidos el día anterior a la entrega.
+
+
+El sistema debe permitir registrar el volumen de ventas por temporada.
+
+
+El sistema debe permitir asignar pedidos a diferentes personas (hijos, empleados, etc.).
+
+
+El sistema debe permitir definir zonas de reparto basadas en experiencia previa.
+
+
+El sistema debe permitir cargar y registrar el stock recibido diariamente.
+
+
+El sistema debe permitir registrar datos del vehículo usado para entregas.
+
+
+El sistema debe permitir asignar un segundo vehículo como respaldo (tercerizado).
+
+
+El sistema debe permitir registrar y visualizar multas y su responsable.
+
+
+El sistema debe generar reportes de gasto logístico.

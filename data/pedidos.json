@@ -1,0 +1,56 @@
+[
+    {
+        "id": 1,
+        "usuario": "Jose Martinez",
+        "items": [
+            {
+                "nombre": "Jabón líquido",
+                "precio": 1500.0,
+                "cantidad": 50,
+                "subtotal": 75000.0
+            }
+        ],
+        "direccion_destino": "Universidad de la Cuenca del Plata",
+        "estado": "completado",
+        "conductor": "Juan Pérez",
+        "fecha_creacion": "2025-06-18T14:25:25.565575"
+    },
+    {
+        "id": 2,
+        "usuario": "Ricardo Darin",
+        "items": [
+            {
+                "nombre": "Empanadas de Darin",
+                "precio": 30000.0,
+                "cantidad": 1,
+                "subtotal": 30000.0
+            }
+        ],
+        "direccion_destino": "Gurruchaga 1802, Palermo",
+        "estado": "completado",
+        "conductor": "Juan Pérez",
+        "fecha_creacion": "2025-06-18T14:55:26.365475"
+    },
+    {
+        "id": 3,
+        "usuario": "Martin Perez",
+        "items": [
+            {
+                "nombre": "Azúcar",
+                "precio": 1200.0,
+                "cantidad": 5,
+                "subtotal": 6000.0
+            },
+            {
+                "nombre": "Detergente",
+                "precio": 2000.0,
+                "cantidad": 10,
+                "subtotal": 20000.0
+            }
+        ],
+        "direccion_destino": "Av. Rivadavia 7200, Flores",
+        "estado": "en_proceso",
+        "conductor": "Jorge Luis",
+        "fecha_creacion": "2025-06-18T15:25:44.287287"
+    }
+]

@@ -1,0 +1,38 @@
+[
+    {
+        "nombre": "Juan Pérez",
+        "licencia": "B1",
+        "estado": "disponible",
+        "usuario": "juan.perez",
+        "password": "juan.perez123",
+        "dni": "12345678",
+        "telefono": "011-1234-5678"
+    },
+    {
+        "nombre": "María García",
+        "licencia": "B2",
+        "estado": "disponible",
+        "usuario": "maria.garcia",
+        "password": "maria.garcia123",
+        "dni": "87654321",
+        "telefono": "011-8765-4321"
+    },
+    {
+        "nombre": "Carlos López",
+        "licencia": "B1",
+        "estado": "disponible",
+        "usuario": "carlos.lopez",
+        "password": "carlos.lopez123",
+        "dni": "11223344",
+        "telefono": "011-1122-3344"
+    },
+    {
+        "nombre": "Jorge Luis",
+        "licencia": "B3",
+        "estado": "ocupado",
+        "usuario": "jorge.luis",
+        "password": "jorge.luis123",
+        "dni": "55667788",
+        "telefono": "011-5566-7788"
+    }
+]
