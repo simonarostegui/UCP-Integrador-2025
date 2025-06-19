@@ -28,60 +28,101 @@ por donde pasan, para poder resolver este tema.
 
 Lista de 20 requerimientos funcionales
 
-El sistema debe permitir la carga de productos sin marca específica.
+✅ El sistema debe permitir la carga de productos sin marca específica.
 
 
-El sistema debe permitir crear productos de marca propia.
+✅ El sistema debe permitir crear productos de marca propia.
 
 
-El sistema debe permitir consultar estadísticas de ventas (lo más vendido y lo menos vendido).
+✅ El sistema debe permitir consultar estadísticas de ventas (lo más vendido y lo menos vendido).
 
 
-El sistema debe permitir registrar ingresos de mercadería.
+✅ El sistema debe permitir registrar ingresos de mercadería.
 
 
-El sistema debe permitir consultar el historial de stock.
+✅ El sistema debe permitir consultar el historial de stock.
 
 
-El sistema debe permitir actualizar los precios de los productos.
+✅ El sistema debe permitir actualizar los precios de los productos.
 
 
 El sistema debe permitir agregar promociones.
 
 El sistema debe facilitar la facturación directa desde un único sistema sin depender de otra app.
 
-
 El sistema debe permitir registrar los puntos de carga de combustible.
 
 
-El sistema debe permitir registrar el consumo de combustible y su calidad.
+✅ El sistema debe permitir registrar el consumo de combustible y su calidad.
 
 
-El sistema debe permitir planificar los pedidos desde el martes hasta el sábado.
+✅ El sistema debe permitir planificar los pedidos desde el martes hasta el sábado.
 
 
-El sistema debe permitir cargar los pedidos el día anterior a la entrega.
+✅ El sistema debe permitir cargar los pedidos el día anterior a la entrega.
 
 
-El sistema debe permitir registrar el volumen de ventas por temporada.
+✅ El sistema debe permitir registrar el volumen de ventas por temporada.
 
 
-El sistema debe permitir asignar pedidos a diferentes personas (hijos, empleados, etc.).
+✅ El sistema debe permitir asignar pedidos a diferentes personas (hijos, empleados, etc.).
 
 
 El sistema debe permitir definir zonas de reparto basadas en experiencia previa.
 
 
-El sistema debe permitir cargar y registrar el stock recibido diariamente.
+✅ El sistema debe permitir cargar y registrar el stock recibido diariamente.
 
 
-El sistema debe permitir registrar datos del vehículo usado para entregas.
+✅ El sistema debe permitir registrar datos del vehículo usado para entregas.
 
 
-El sistema debe permitir asignar un segundo vehículo como respaldo (tercerizado).
+✅ El sistema debe permitir asignar un segundo vehículo como respaldo (tercerizado).
 
 
-El sistema debe permitir registrar y visualizar multas y su responsable.
+✅ El sistema debe permitir registrar y visualizar multas y su responsable.
 
 
-El sistema debe generar reportes de gasto logístico.
+✅ El sistema debe generar reportes de gasto logístico.
+
+Requerimientos  NF
+El sistema debe ser accesible desde dispositivos móviles.
+
+✅ El sistema debe tener una interfaz clara, comprensible y operable sin conocimientos técnicos previos.
+
+✅ El sistema debe ser seguro en el manejo de datos fiscales y de facturación.
+
+
+✅ El sistema debe garantizar respaldo periódico de la información.
+
+
+✅ El sistema debe actualizar precios y promociones en menos de 2 segundos por acción.
+
+✅ El sistema debe permitir escalar para incorporar más vehículos en el futuro.
+
+
+✅ El sistema debe estar disponible 24/7 sin interrupciones de servicio.
+
+
+✅ El sistema debe ser eficiente para manejar estadísticas en tiempo real.
+
+
+El sistema debe ser compatible con impresoras fiscales.
+
+
+✅ El sistema debe tener soporte multiusuario con distintos niveles de acceso.
+
+
+✅ El sistema debe operar bajo conexión limitada o desconectado parcialmente (offline-first).
+
+
+El sistema debe ser capaz de integrarse con otras herramientas contables.
+
+
+El sistema debe cumplir con normativas fiscales y legales vigentes en Argentina.
+
+
+El sistema debe estar diseñado para ser usado en un entorno familiar y con empleados no especializados.
+
+
+✅ El sistema debe optimizarse para minimizar el tiempo de carga de pedidos y reportes.
