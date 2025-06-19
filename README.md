@@ -10,7 +10,6 @@ Trabajo integrador para el primer cuatrimestre del año 2025 de la Cuenca del Pl
 | Codutti Laura       | agostinacod@gmail.com |
 | Benitez Juan          | bjuanpihotmailcom@gmail.com               |
 | Alcaraz Nicolas               |   nicolasagustinalcaraz@gmail.com |
-| Caceres Pared Marcelo Agustin | agustincaceresucp@gmail.com |
 
 # Consigna
 La empresa necesita empezar a mejorar su trabajo en logística, por los altos costos en pérdidas generales (sueldos, combustibles y multas, etc.). Para esto, tomó un caso ejemplo para ir analizando el tema.
